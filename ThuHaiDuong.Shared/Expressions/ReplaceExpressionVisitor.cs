@@ -1,0 +1,20 @@
+using System.Linq.Expressions;
+
+namespace ThuHaiDuong.Shared.Expressions;
+
+public class ReplaceExpressionVisitor : ExpressionVisitor
+{
+    private readonly Expression _oldValue;
+    private readonly Expression _newValue;
+
+    public ReplaceExpressionVisitor(Expression oldValue, Expression newValue)
+    {
+        _oldValue = oldValue;
+        _newValue = newValue;
+    }
+
+    protected override Expression VisitParameter(ParameterExpression node)
+    {
+        return node == _oldValue ? _newValue : base.VisitParameter(node);
+    }
+}
