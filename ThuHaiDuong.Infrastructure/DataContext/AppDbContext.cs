@@ -25,6 +25,7 @@ namespace ThuHaiDuong.Infrastructure.DataContext
         public virtual DbSet<Tag> Tags { get; set; }
         public virtual DbSet<UserReadingProgress> UserReadingProgresses { get; set; }
         public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+        public virtual DbSet<Author> Authors { get; set; }
         public async Task<int> CommitChangeAsync()
         {
             return await SaveChangesAsync();
@@ -56,6 +57,7 @@ namespace ThuHaiDuong.Infrastructure.DataContext
             modelBuilder.BuildTagModel();
             modelBuilder.BuildUserReadingProgressModel();
             modelBuilder.BuildRefreshTokenModel();
+            modelBuilder.BuildAuthorModel();
         }
     }
 }

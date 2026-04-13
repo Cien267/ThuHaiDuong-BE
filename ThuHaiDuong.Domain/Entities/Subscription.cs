@@ -6,8 +6,7 @@ public class Subscription : BaseEntity
 {
     public Guid UserId { get; set; }
  
-    // "Basic" | "Premium" | ... — dùng string thay vì FK sang bảng Plan
-    // để tránh lock schema khi thay đổi gói
+    // "Basic" | "Premium" | ...
     public string PlanCode { get; set; } = null!;
  
     // "Active" | "Expired" | "Cancelled" | "PendingPayment"
@@ -76,7 +75,6 @@ public static class SubscriptionModelBuilderExtensions
                 .IsRequired()
                 .HasColumnType("datetime2");
  
-            // Tra cứu sub đang active của user
             entity.HasIndex(e => new { e.UserId, e.Status, e.EndDate })
                 .HasDatabaseName("IX_Subscription_UserId_Status_EndDate");
  

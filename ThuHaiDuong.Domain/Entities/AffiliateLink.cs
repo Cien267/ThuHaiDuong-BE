@@ -7,13 +7,13 @@ public class AffiliateLink : BaseEntity
     public string Name { get; set; } = null!;
     public string TargetUrl { get; set; } = null!;
  
-    // Slug ngắn dùng trong URL redirect: /go/{TrackingCode}
+    // Short slug used in URL redirect: /go/{TrackingCode}
     public string TrackingCode { get; set; } = null!;
  
     // "in-chapter" | "sidebar" | "popup" | "global"
     public string Placement { get; set; } = "in-chapter";
  
-    // Ưu tiên hiển thị khi nhiều link cùng match
+    // Prioritize displaying when multiple links match
     public int Priority { get; set; } = 0;
  
     public bool IsActive { get; set; } = true;

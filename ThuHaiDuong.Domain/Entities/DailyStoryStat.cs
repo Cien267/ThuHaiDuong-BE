@@ -47,12 +47,10 @@ public static class DailyStoryStatModelBuilderExtensions
                 .IsRequired()
                 .HasDefaultValue(0);
  
-            // Mỗi story chỉ có 1 dòng per ngày
             entity.HasIndex(e => new { e.StoryId, e.StatDate })
                 .IsUnique()
                 .HasDatabaseName("IX_DailyStoryStat_StoryId_StatDate");
  
-            // Dashboard "hot nhất hôm nay"
             entity.HasIndex(e => new { e.StatDate, e.ViewCount })
                 .HasDatabaseName("IX_DailyStoryStat_StatDate_ViewCount");
  

@@ -5,14 +5,12 @@ namespace ThuHaiDuong.Domain.Entities;
 public class ChapterView : BaseEntity
 {
     public Guid ChapterId { get; set; }
- 
-    // Denormalized để tránh JOIN khi query "truyện nào được đọc nhiều"
     public Guid StoryId { get; set; }
  
     // Null = anonymous
     public Guid? UserId { get; set; }
  
-    // Session ID cho anonymous tracking (cookie/localStorage)
+    // Session ID for anonymous tracking (cookie/localStorage)
     public string? SessionId { get; set; }
     public string? IpAddress { get; set; }
     public DateTime ViewedAt { get; set; } = DateTime.UtcNow;
@@ -58,15 +56,12 @@ public static class ChapterViewModelBuilderExtensions
                 .IsRequired()
                 .HasColumnType("datetime2");
  
-            // Hot path: background job đếm view theo chapter trong khoảng thời gian
             entity.HasIndex(e => new { e.ChapterId, e.ViewedAt })
                 .HasDatabaseName("IX_ChapterView_ChapterId_ViewedAt");
  
-            // Hot path: đếm view theo story (dashboard "truyện hot")
             entity.HasIndex(e => new { e.StoryId, e.ViewedAt })
                 .HasDatabaseName("IX_ChapterView_StoryId_ViewedAt");
  
-            // Dedup: 1 session + chapter = 1 view trong 30 phút (check ở application layer)
             entity.HasIndex(e => new { e.SessionId, e.ChapterId })
                 .HasDatabaseName("IX_ChapterView_SessionId_ChapterId");
  

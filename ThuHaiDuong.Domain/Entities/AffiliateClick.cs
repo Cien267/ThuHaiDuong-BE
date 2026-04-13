@@ -9,7 +9,7 @@ public class AffiliateClick : BaseEntity
     // Null = anonymous user
     public Guid? UserId { get; set; }
  
-    // Chương user đang đọc khi click
+    // The chapter the user is reading when clicked
     public Guid? ChapterId { get; set; }
  
     public string? IpAddress { get; set; }

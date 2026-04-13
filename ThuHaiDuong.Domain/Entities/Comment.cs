@@ -7,10 +7,10 @@ public class Comment : BaseEntity
     public Guid UserId { get; set; }
     public Guid StoryId { get; set; }
  
-    // Null = comment ở trang truyện; có giá trị = comment ở trang chương cụ thể
+    // Null = comment on the story page; has value = comment on a specific chapter page
     public Guid? ChapterId { get; set; }
  
-    // Null = comment gốc; có giá trị = reply
+    // Null = root comment; has value = reply
     public Guid? ParentCommentId { get; set; }
  
     public string Content { get; set; } = null!;
@@ -92,7 +92,7 @@ public static class CommentModelBuilderExtensions
                 .OnDelete(DeleteBehavior.NoAction)
                 .IsRequired(false);
  
-            // Self-referencing: reply của comment
+            // Self-referencing: comment's replies
             entity.HasOne(e => e.ParentComment)
                 .WithMany(c => c.Replies)
                 .HasForeignKey(e => e.ParentCommentId)

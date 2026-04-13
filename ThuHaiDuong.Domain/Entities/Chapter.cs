@@ -85,7 +85,6 @@ public static class ChapterModelBuilderExtensions
                 .IsRequired()
                 .HasColumnType("datetime2");
  
-            // Hot path: lấy chương theo StoryId + số thứ tự (prev/next)
             entity.HasIndex(e => new { e.StoryId, e.ChapterNumber })
                 .IsUnique()
                 .HasDatabaseName("IX_Chapter_StoryId_ChapterNumber");

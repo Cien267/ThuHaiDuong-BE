@@ -46,7 +46,6 @@ public static class RatingModelBuilderExtensions
                 .IsRequired()
                 .HasColumnType("datetime2");
  
-            // Mỗi user chỉ được rate 1 lần per story
             entity.HasIndex(e => new { e.UserId, e.StoryId })
                 .IsUnique()
                 .HasDatabaseName("IX_Rating_UserId_StoryId");

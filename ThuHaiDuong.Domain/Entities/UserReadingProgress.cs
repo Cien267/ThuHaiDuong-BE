@@ -48,7 +48,6 @@ public static class UserReadingProgressModelBuilderExtensions
                 .IsRequired()
                 .HasColumnType("datetime2");
  
-            // Mỗi user chỉ có 1 progress per story → UPSERT pattern
             entity.HasIndex(e => new { e.UserId, e.StoryId })
                 .IsUnique()
                 .HasDatabaseName("IX_UserReadingProgress_UserId_StoryId");
