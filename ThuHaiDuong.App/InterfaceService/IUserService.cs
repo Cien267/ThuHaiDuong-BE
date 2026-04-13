@@ -12,7 +12,6 @@ namespace ThuHaiDuong.Application.InterfaceService
         Task<UserResult> GetUserByIdAsync(Guid id);
         Task<UserResult> CreateUserAsync(CreateUserInput request);
         Task<UserResult> UpdateUserAsync(Guid userId, UpdateUserInput request);
-        Task<UserResult> UpdateRolesAsync(Guid userId, UpdateRolesInput request);
         Task DeleteUserAsync(Guid id);
     }
 }

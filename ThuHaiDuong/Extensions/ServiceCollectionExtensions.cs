@@ -13,8 +13,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IDbContext, AppDbContext>();
         services.AddScoped<IBaseRepository<RefreshToken>, BaseRepository<RefreshToken>>();
-        services.AddScoped<IBaseRepository<Permissions>, BaseRepository<Permissions>>();
-        services.AddScoped<IBaseRepository<Role>, BaseRepository<Role>>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBaseRepository<User>, BaseRepository<User>>();
         services.AddScoped<IUserRepository, UserRepository>();

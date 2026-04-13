@@ -52,7 +52,7 @@ namespace ThuHaiDuong.Application.ImplementService
         {
             var query = _baseUserRepository.BuildQueryable(
                 new List<string> { "Brokerage", "Permissions", "Permissions.Role"}, 
-                p => p.BrokerageId == _brokerageId
+                null
             );
             
             if (!string.IsNullOrEmpty(userQuery.FullName))
@@ -112,18 +112,6 @@ namespace ThuHaiDuong.Application.ImplementService
             }
             
             var user = await GetUserByIdAsync(id);
-           
-            var brokerageId = _currentUserService.GetBrokerageId();
-            if (!brokerageId.HasValue)
-            {
-                throw new UnauthorizedAccessException("User is not associated with a brokerage");
-            }
-            
-            if (brokerageId != user.BrokerageId)
-            {
-                throw new ResponseErrorObject(
-                    "Cannot delete user from a different brokerage.", StatusCodes.Status400BadRequest);
-            }
             
             await _baseUserRepository.DeleteAsync(id);
         }
@@ -151,25 +139,19 @@ namespace ThuHaiDuong.Application.ImplementService
                 );
             }
 
-            if (!request.BrokerageId.HasValue) request.BrokerageId = _brokerageId;
-
             var user = new User
             {
                 Avatar =
                     "https://static.vecteezy.com/system/resources/previews/009/292/244/original/default-avatar-icon-of-social-media-user-vector.jpg",
-                DateOfBirth = request.DateOfBirth ?? DateTime.UtcNow,
                 PhoneNumber = request.PhoneNumber ?? "",
                 FullName = request.FullName,
                 Password = BCryptNet.HashPassword(request.Password),
                 UserName = request.UserName,
-                BrokerageId = request.BrokerageId,
                 Email = request.Email,
-                HasOnboarded = true,
                 CreatedAt = DateTime.UtcNow,
             };
 
             user = await _baseUserRepository.CreateAsync(user);
-            await _userRepository.AddRoleToUserAsync(user, new List<string> { "User" });
             
             return await GetUserByIdAsync(user.Id);
         }
@@ -220,7 +202,6 @@ namespace ThuHaiDuong.Application.ImplementService
             }
             
             user.FullName = request.FullName;
-            user.DateOfBirth = request.DateOfBirth ?? DateTime.UtcNow;
             user.Email = request.Email;
             user.PhoneNumber = request.PhoneNumber;
             user.UpdatedAt = DateTime.UtcNow;
@@ -229,49 +210,5 @@ namespace ThuHaiDuong.Application.ImplementService
 
             return await GetUserByIdAsync(user.Id);
         }
-        
-        public async Task<UserResult> UpdateRolesAsync(Guid userId, UpdateRolesInput request)
-        {
-            var assigner = await _baseUserRepository
-                .BuildQueryable(
-                    new List<string> { "Brokerage", "Permissions", "Permissions.Role"}, 
-                    p => p.Id == request.AssignerId
-                )
-                .Select(UserResult.FromUser)
-                .FirstOrDefaultAsync();
-            
-            if (assigner == null) throw new ResponseErrorObject("Assigner not found", StatusCodes.Status404NotFound);
-            
-            
-            /*bool isPlatformAdmin = assigner.Roles.Contains("Superadministrator") && assigner.BrokerageId == null;*/
-            bool isBrokerageAdmin = assigner.Roles.Contains("Administrator") && assigner.BrokerageId != null;
-            bool willBeAdmin = request.Roles.Contains("Administrator");
-
-            if (!isBrokerageAdmin) throw new ResponseErrorObject("Insufficient permissions", StatusCodes.Status403Forbidden);
-
-            var assignee = await _baseUserRepository.GetByIdAsync(userId);
-            if (assignee == null) throw new ResponseErrorObject("Assignee not found", StatusCodes.Status404NotFound);
-            
-            if (isBrokerageAdmin && assignee.BrokerageId != assigner.BrokerageId) throw new ResponseErrorObject("You cannot manage users outside your brokerage", StatusCodes.Status403Forbidden);
-            if (isBrokerageAdmin && !willBeAdmin)
-            {
-                int otherAdminsInBrokerage = await _baseUserRepository
-                    .BuildQueryable(
-                        new List<string> { "Permissions", "Permissions.Role" }, 
-                        u => u.BrokerageId == assignee.BrokerageId && u.Id != assignee.Id)
-                            .CountAsync(u => u.Permissions.Any(p => p.Role.RoleCode == "Administrator"));
-
-                if (otherAdminsInBrokerage == 0)
-                {
-                    throw new ResponseErrorObject(
-                        "Cannot remove the last Administrator of this Brokerage. Please assign another Admin first.", 
-                        StatusCodes.Status400BadRequest);
-                }
-            }
-
-            await _userRepository.AddRoleToUserAsync(assignee, request.Roles);
-
-            return await GetUserByIdAsync(assignee.Id);
-        } 
     }
 }

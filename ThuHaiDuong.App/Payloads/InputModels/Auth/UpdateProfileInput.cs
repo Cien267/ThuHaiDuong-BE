@@ -7,7 +7,6 @@ namespace ThuHaiDuong.Application.Payloads.InputModels.Auth
 
         [Required(ErrorMessage = "Full name is required")]
         public string FullName { get; set; }
-        public DateTime DateOfBirth { get; set; }
 
         [Required(ErrorMessage = "Email is required")]
         public string Email { get; set; }

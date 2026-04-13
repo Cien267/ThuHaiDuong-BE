@@ -22,19 +22,14 @@ namespace ThuHaiDuong.Application.ImplementService
         private readonly IBaseRepository<User> _baseUserRepository;
         private readonly IConfiguration _configuration;
         private readonly IUserRepository _userRepository;
-        private readonly IBaseRepository<Permissions> _basePermissionsRepository;
-        private readonly IBaseRepository<Role> _baseRoleRepository;
         private readonly IBaseRepository<RefreshToken> _baseRefreshTokenRepository;
         private readonly ICurrentUserService _currentUserService;
         public AuthService(IBaseRepository<User> baseUserRepository, IConfiguration configuration, IUserRepository userRepository, 
-            IBaseRepository<Permissions> basePermissionsRepository, IBaseRepository<Role> baseRoleRepository, 
             IBaseRepository<RefreshToken> baseRefreshTokenRepository, ICurrentUserService currentUserService)
         {
             _baseUserRepository = baseUserRepository;
             _configuration = configuration;
             _userRepository = userRepository;
-            _basePermissionsRepository = basePermissionsRepository;
-            _baseRoleRepository = baseRoleRepository;
             _baseRefreshTokenRepository = baseRefreshTokenRepository;
             _currentUserService = currentUserService;
         }
@@ -69,9 +64,6 @@ namespace ThuHaiDuong.Application.ImplementService
 
         public async Task<ResponseObject<LoginResult>> GetJwtTokenAsync(User user)
         {
-            var permissions = await _basePermissionsRepository.GetAllAsync(x => x.UserId == user.Id);
-            var roles = await _baseRoleRepository.GetAllAsync();
-
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -79,25 +71,7 @@ namespace ThuHaiDuong.Application.ImplementService
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? ""),
                 new Claim("UserId", user.Id.ToString()),
-                new Claim("BrokerageId", user.BrokerageId?.ToString() ?? ""),
             };
-
-            foreach (var permission in permissions)
-            {
-                foreach (var role in roles)
-                {
-                    if (role.Id == permission.RoleId)
-                    {
-                        authClaims.Add(new Claim("Permission", role.RoleName));
-                    }
-                }
-            }
-
-            var userRoles = await _userRepository.GetRolesOfUserAsync(user);
-            foreach (var item in userRoles)
-            {
-                authClaims.Add(new Claim(ClaimTypes.Role, item));
-            }
 
             var jwtToken = GetToken(authClaims);
             var refreshToken = GenerateRefreshToken();
@@ -159,8 +133,6 @@ namespace ThuHaiDuong.Application.ImplementService
                 );
             }
             
-            var userRoles = await _userRepository.GetRolesOfUserAsync(user);
-
             return new LoginResult
             {
                 User = new UserResult
@@ -168,14 +140,12 @@ namespace ThuHaiDuong.Application.ImplementService
                     Id = user.Id,
                     UserName = user.UserName,
                     Avatar = user.Avatar,
-                    DateOfBirth = user.DateOfBirth,
                     Email = user.Email,
                     FullName = user.FullName,
                     PhoneNumber = user.PhoneNumber,
                     CreatedAt = user.CreatedAt,
                     UpdatedAt = user.UpdatedAt,
                     DeletedAt = user.DeletedAt,
-                    Roles = userRoles.ToList()
                 },
                 AccessToken = jwtTokenResponse.Data.AccessToken,
                 RefreshToken = jwtTokenResponse.Data.RefreshToken
@@ -214,55 +184,25 @@ namespace ThuHaiDuong.Application.ImplementService
                 {
                     Avatar =
                         "https://static.vecteezy.com/system/resources/previews/009/292/244/original/default-avatar-icon-of-social-media-user-vector.jpg",
-                    DateOfBirth = request.DateOfBirth ?? DateTime.UtcNow,
                     PhoneNumber = request.PhoneNumber ?? "",
                     FullName = request.FullName,
                     Password = BCryptNet.HashPassword(request.Password),
                     UserName = request.UserName,
                     Email = request.Email,
-                    HasOnboarded = true,
                     CreatedAt = DateTime.UtcNow,
                 };
 
                 user = await _baseUserRepository.CreateAsync(user);
 
-                bool roleAdded = await _userRepository.AddRoleToUserAsync(user, new List<string> { "Administrator" });
             
-                if (!roleAdded)
-                {
-                    throw new InvalidOperationException("Failed to assign user role.");
-                }
-
-                /*var confirmEmail = new ConfirmEmail
-                {
-                    IsActive = true,
-                    ConfirmCode = GenerateCodeActive(),
-                    ExpiryTime = DateTime.UtcNow.AddMinutes(10),
-                    IsConfirmed = false,
-                    UserId = user.Id
-                };
-
-                await _baseConfirmEmailRepository.CreateAsync(confirmEmail);
-
-                var message = new EmailMessage(
-                    new[] { request.Email },
-                    "Confirm your account",
-                    $"Your confirmation code is: {confirmEmail.ConfirmCode}"
-                );
-
-                _emailService.SendEmail(message);*/
-
-                var userRoles = await _userRepository.GetRolesOfUserAsync(user);
                 return new UserResult
                 {
                     Id = user.Id,
                     Avatar = user.Avatar,
-                    DateOfBirth = user.DateOfBirth,
                     FullName = user.FullName,
                     UserName = user.UserName,
                     PhoneNumber = user.PhoneNumber,
                     Email = user.Email,
-                    Roles = userRoles.ToList()
                 };
             }
             catch (Exception e)
@@ -305,22 +245,17 @@ namespace ThuHaiDuong.Application.ImplementService
                 );
             }
 
-            var userRoles = await _userRepository.GetRolesOfUserAsync(user);
-
             return new UserResult
             {
                 Id = user.Id,
                 UserName = user.UserName,
                 Avatar = user.Avatar,
-                DateOfBirth = user.DateOfBirth,
                 Email = user.Email,
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber,
-                BrokerageId = user.BrokerageId,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 DeletedAt = user.DeletedAt,
-                Roles = userRoles.ToList()
             };
         }
 
@@ -359,36 +294,26 @@ namespace ThuHaiDuong.Application.ImplementService
                     throw new ResponseErrorObject("Email already exists", StatusCodes.Status400BadRequest);
                 }
 
-                if(request.DateOfBirth == null)
-                {
-                    request.DateOfBirth = existingUser.DateOfBirth;
-                }
-
 
                 existingUser.FullName = request.FullName;
-                existingUser.DateOfBirth = request.DateOfBirth;
                 existingUser.Email = request.Email;
                 existingUser.PhoneNumber = request.PhoneNumber;
                 existingUser.UpdatedAt = DateTime.UtcNow;
 
                 await _userRepository.UpdateAsync(existingUser);
 
-                var roles = await _userRepository.GetRolesOfUserAsync(existingUser);
 
                 var responseData =  new UserResult
                 {
                     Id = existingUser.Id,
                     UserName = existingUser.UserName,
                     Avatar = existingUser.Avatar,
-                    DateOfBirth = existingUser.DateOfBirth,
                     Email = existingUser.Email,
                     FullName = existingUser.FullName,
                     PhoneNumber = existingUser.PhoneNumber,
-                    BrokerageId = existingUser.BrokerageId,
                     CreatedAt = existingUser.CreatedAt,
                     UpdatedAt = existingUser.UpdatedAt,
                     DeletedAt = existingUser.DeletedAt,
-                    Roles = roles.ToList()
                 };
 
                 return new ResponseObject<UserResult>
@@ -429,17 +354,14 @@ namespace ThuHaiDuong.Application.ImplementService
                 user.Password = BCryptNet.HashPassword(request.NewPassword);
                 user.UpdatedAt = DateTime.Now;
                 await _baseUserRepository.UpdateAsync(user);
-                var roles = await _userRepository.GetRolesOfUserAsync(user);
                 var responseData = new UserResult
                 {
                     Id = user.Id,
                     Avatar = user.Avatar,
-                    DateOfBirth = user.DateOfBirth,
                     FullName = user.FullName,
                     UserName = user.UserName,
                     PhoneNumber = user.PhoneNumber,
                     Email = user.Email,
-                    Roles = roles.ToList()
                 };
                 
                 return new ResponseObject<UserResult>

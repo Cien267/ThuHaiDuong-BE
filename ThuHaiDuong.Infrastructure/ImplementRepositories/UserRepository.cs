@@ -41,67 +41,6 @@ namespace ThuHaiDuong.Infrastructure.ImplementRepositories
         }
         #endregion
 
-        public async Task<bool> AddRoleToUserAsync(User user, List<string> listRoles)
-        {
-            if (user == null)
-            {
-                return false;
-            }
-
-            if (listRoles == null || !listRoles.Any())
-            {
-                return false;
-            }
-
-            var distinctRoles = listRoles.Distinct().ToList();
-    
-            var roleItems = await _context.Roles
-                .Where(r => distinctRoles.Contains(r.RoleCode))
-                .ToListAsync();
-
-            var missingRoles = distinctRoles.Except(roleItems.Select(r => r.RoleCode)).ToList();
-            if (missingRoles.Any())
-            {
-                throw new InvalidOperationException($"The following roles do not exist: {string.Join(", ", missingRoles)}");
-            }
-
-            await _context.Permissions
-                .Where(p => p.UserId == user.Id)
-                .ExecuteDeleteAsync();
-
-            var newPermissions = roleItems
-                .Select(role => new Permissions
-                {
-                    RoleId = role.Id,
-                    UserId = user.Id
-                })
-                .ToList();
-
-            await _context.Permissions.AddRangeAsync(newPermissions);
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-
-        public async Task<IEnumerable<string>> GetRolesOfUserAsync(User user)
-        {
-            var roles = new List<string>();
-
-            var listRoles = await _context.Permissions
-                                          .Where(x => x.UserId == user.Id)
-                                          .Select(x => x.RoleId)
-                                          .Distinct()
-                                          .ToListAsync();
-
-            var rolesData = await _context.Roles
-                                          .Where(r => listRoles.Contains(r.Id))
-                                          .ToListAsync();
-
-            roles.AddRange(rolesData.Select(r => r.RoleCode));
-
-            return roles.AsEnumerable();
-        }
-        
         public async Task RevokeRefreshTokensAsync(Guid userId)
         {
             var tokens = await _context.RefreshTokens

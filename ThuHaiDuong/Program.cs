@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Infrastructure.DataContext;
 using Hangfire;
 using ThuHaiDuong.Application.Payloads.Responses;
-using ThuHaiDuong.Data;
 using ThuHaiDuong.Middlewares;
 using ThuHaiDuong.Extensions;
 using ThuHaiDuong.Filters;
@@ -21,7 +20,6 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         await context.Database.MigrateAsync();
-        await DbInitializer.SeedRoles(context);
     }
     catch (Exception ex)
     {

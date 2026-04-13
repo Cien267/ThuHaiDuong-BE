@@ -6,9 +6,6 @@ namespace ThuHaiDuong.Domain.InterfaceRepositories
     {
         Task<User> GetUserByEmail(string email);
         Task<User> GetUserByUsername(string username);
-        Task<bool> AddRoleToUserAsync(User user, List<string> Roles);
-        Task<IEnumerable<string>> GetRolesOfUserAsync(User user);
-
         Task<User> UpdateAsync(User user);
         Task RevokeRefreshTokensAsync(Guid userId);
 

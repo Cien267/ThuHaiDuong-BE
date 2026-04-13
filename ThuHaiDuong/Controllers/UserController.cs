@@ -56,13 +56,6 @@ namespace ThuHaiDuong.Controllers
             return Ok(result);
         }
         
-        [HttpPut("{id}/roles")]
-        public async Task<ActionResult<UserResult>> UpdateRolesAsync(Guid id, [FromBody] UpdateRolesInput request)
-        {
-            var result = await _userService.UpdateRolesAsync(id, request);
-            return Ok(result);
-        }
-        
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserAsync(Guid id)
         {
