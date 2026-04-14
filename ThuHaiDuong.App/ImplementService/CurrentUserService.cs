@@ -19,16 +19,6 @@ public class CurrentUserService : ICurrentUserService
         return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
-    public Guid? GetBrokerageId()
-    {
-        var brokerageIdClaim = _contextAccessor.HttpContext?.User?.FindFirst("BrokerageId")?.Value;
-        
-        if (string.IsNullOrEmpty(brokerageIdClaim))
-            return null;
-            
-        return Guid.TryParse(brokerageIdClaim, out var brokerageId) ? brokerageId : null;
-    }
-
     public string GetUserName()
     {
         return _contextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value;

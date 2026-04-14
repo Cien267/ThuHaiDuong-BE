@@ -16,7 +16,6 @@ namespace ThuHaiDuong.Application.ImplementService
         private readonly IBaseRepository<User> _baseUserRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICurrentUserService _currentUserService;
-        private readonly Guid? _brokerageId;
         private IEnumerable<string> _currentUserRole;
         public UserService(
             IBaseRepository<User> baseUserRepository, 
@@ -27,12 +26,6 @@ namespace ThuHaiDuong.Application.ImplementService
             _userRepository = userRepository;
             _baseUserRepository = baseUserRepository;
             _currentUserService = currentUserService;
-            var brokerageId = _currentUserService.GetBrokerageId();
-            if (!brokerageId.HasValue)
-            {
-                throw new UnauthorizedAccessException("User is not associated with a brokerage");
-            }
-            _brokerageId = brokerageId.Value;
             _currentUserRole = _currentUserService.GetRoles();
         }
 
@@ -40,7 +33,7 @@ namespace ThuHaiDuong.Application.ImplementService
         {
             var users = await _baseUserRepository
                 .BuildQueryable(
-                    new List<string> { "Brokerage" },
+                    new List<string> {},
                     null
                 )
                 .Select(UserResult.FromUser)
@@ -51,7 +44,7 @@ namespace ThuHaiDuong.Application.ImplementService
         public async Task<PagedResult<UserResult>> GetListUsersAsync(UserQuery userQuery)
         {
             var query = _baseUserRepository.BuildQueryable(
-                new List<string> { "Brokerage", "Permissions", "Permissions.Role"}, 
+                new List<string> {}, 
                 null
             );
             
@@ -90,7 +83,7 @@ namespace ThuHaiDuong.Application.ImplementService
         {
             var user = await _baseUserRepository
                 .BuildQueryable(
-                    new List<string> { "Brokerage", "Permissions", "Permissions.Role"}, 
+                    new List<string> {}, 
                     p => p.Id == id
                 )
                 .Select(UserResult.FromUser)

@@ -1,0 +1,347 @@
+================================================================
+DATABASE SCHEMA — Story Reading Platform
+Stack: SQL Server + EF Core (.NET 8)
+================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BASE (tất cả bảng đều kế thừa)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BaseEntity
+  Id          UNIQUEIDENTIFIER  PK
+  CreatedAt   DATETIME2
+  UpdatedAt   DATETIME2         -- tự động cập nhật qua SaveChanges
+  IsDeleted   BIT               -- soft delete, mặc định false
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NHÓM 1 — IDENTITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: users
+  UserName      NVARCHAR(100)   UNIQUE, NOT NULL
+  Password      NVARCHAR(256)   NOT NULL -- hashed
+  FullName      NVARCHAR(200)
+  Email         NVARCHAR(256)   UNIQUE, NOT NULL
+  Avatar        NVARCHAR(500)
+  PhoneNumber   NVARCHAR(20)
+  Role          NVARCHAR(20)    DEFAULT 'Reader'
+                                -- 'Reader' | 'Contributor' | 'Admin' | 'SuperAdmin'
+  IsActive      BIT             DEFAULT true
+  LastLoginAt   DATETIME2
+
+TABLE: refresh_tokens
+  UserId        UNIQUEIDENTIFIER  FK → users
+  Token         NVARCHAR(512)     UNIQUE, NOT NULL
+  ExpiresAt     DATETIME2         NOT NULL
+  IsRevoked     BIT               DEFAULT false
+  IpAddress     NVARCHAR(45)
+  UserAgent     NVARCHAR(500)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NHÓM 2 — NỘI DUNG TRUYỆN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: authors
+  Name          NVARCHAR(200)   NOT NULL
+  Slug          NVARCHAR(250)   UNIQUE -- dùng cho URL /tac-gia/{slug}
+  PenName       NVARCHAR(200)   -- bút danh nếu có
+  Country       NVARCHAR(10)    -- 'CN' | 'VN' | 'KR' | 'JP' ...
+  Description   NVARCHAR(2000)
+  AvatarUrl     NVARCHAR(500)
+
+TABLE: categories
+  Name          NVARCHAR(100)   NOT NULL
+  Slug          NVARCHAR(120)   UNIQUE -- dùng cho URL /the-loai/{slug}
+  Description   NVARCHAR(500)
+  ParentId      UNIQUEIDENTIFIER  FK → categories (self-ref, nullable)
+                                  -- hỗ trợ danh mục cha/con
+                                  -- VD: 'Ngôn tình' → 'Hiện đại' / 'Cổ đại'
+  SortOrder     INT             DEFAULT 0
+  IsActive      BIT             DEFAULT true
+
+TABLE: tags
+  Name          NVARCHAR(100)   NOT NULL
+  Slug          NVARCHAR(120)   UNIQUE
+  -- Tags linh hoạt hơn categories, dùng để gắn nhãn phụ
+  -- VD: 'xuyên không', 'hệ thống', 'vô cp'
+
+TABLE: stories
+  Title             NVARCHAR(300)     NOT NULL
+  Slug              NVARCHAR(350)     UNIQUE -- URL /truyen/{slug}
+  AuthorId          UNIQUEIDENTIFIER  FK → authors, NOT NULL
+  AuthorName        NVARCHAR(200)     NOT NULL
+                                      -- cached từ authors.Name, tránh JOIN khi chỉ hiển thị
+  UploadedByUserId  UNIQUEIDENTIFIER  FK → users (nullable)
+                                      -- admin/contributor upload, null nếu crawl tự động
+  SourceUrl         NVARCHAR(1000)    -- URL gốc nếu crawl từ nguồn ngoài
+  Description       NVARCHAR(MAX)
+  CoverImageUrl     NVARCHAR(500)
+
+  Status            NVARCHAR(20)      DEFAULT 'Draft'
+                                      -- 'Draft' | 'Publishing' | 'Completed' | 'Paused'
+                                      -- trạng thái VẬN HÀNH (admin kiểm soát)
+
+  StoryType         NVARCHAR(20)      DEFAULT 'Completed'
+                                      -- 'Completed' = đã full chapter (convert từ bản gốc)
+                                      -- 'Serial'    = đang ra chapter theo lịch (truyện dịch ongoing)
+                                      -- ĐẶC ĐIỂM NỘI DUNG, tách biệt khỏi Status
+
+  ReleaseSchedule   NVARCHAR(20)      nullable
+                                      -- chỉ có ý nghĩa khi StoryType = 'Serial'
+                                      -- 'Daily' | 'Weekly' | 'BiWeekly' | 'Monthly'
+
+  NextChapterAt     DATETIME2         nullable
+                                      -- dự kiến ra chương tiếp theo
+                                      -- frontend dùng để hiển thị countdown
+                                      -- background job đọc để gửi notification
+
+  ContentSource     NVARCHAR(20)      DEFAULT 'Manual'
+                                      -- 'Manual' | 'Crawled' | 'UGC'
+
+  -- Denormalized counters (background job cập nhật, tránh COUNT(*) mỗi request)
+  TotalChapters     INT               DEFAULT 0
+  TotalViews        BIGINT            DEFAULT 0
+  AverageRating     DECIMAL(3,2)      DEFAULT 0
+  RatingCount       INT               DEFAULT 0
+
+  LastChapterAt     DATETIME2         nullable
+                                      -- thời điểm chapter mới nhất được publish
+                                      -- dùng để sort "truyện mới update"
+
+TABLE: story_categories   -- many-to-many: stories ↔ categories
+  StoryId       UNIQUEIDENTIFIER  FK → stories
+  CategoryId    UNIQUEIDENTIFIER  FK → categories
+  PK: (StoryId, CategoryId)
+
+TABLE: story_tags         -- many-to-many: stories ↔ tags
+  StoryId       UNIQUEIDENTIFIER  FK → stories
+  TagId         UNIQUEIDENTIFIER  FK → tags
+  PK: (StoryId, TagId)
+
+TABLE: chapters
+  StoryId         UNIQUEIDENTIFIER  FK → stories, NOT NULL
+  ChapterNumber   INT               NOT NULL
+                                    -- số thứ tự thực (không dùng Id để sort)
+                                    -- prev/next chapter = ChapterNumber ± 1
+  Title           NVARCHAR(300)     NOT NULL
+  Content         NVARCHAR(MAX)     NOT NULL
+  Status          NVARCHAR(20)      DEFAULT 'Draft'
+                                    -- 'Draft' | 'Published' | 'Scheduled' | 'Hidden'
+  IsVip           BIT               DEFAULT false
+                                    -- true = yêu cầu subscription để đọc
+  WordCount       INT               DEFAULT 0
+  ViewCount       BIGINT            DEFAULT 0  -- denormalized
+  PublishedAt     DATETIME2         nullable
+  UNIQUE: (StoryId, ChapterNumber)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NHÓM 3 — TÍNH NĂNG READER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: user_reading_progresses
+  UserId              UNIQUEIDENTIFIER  FK → users
+  StoryId             UNIQUEIDENTIFIER  FK → stories
+  LastChapterId       UNIQUEIDENTIFIER  FK → chapters
+  LastChapterNumber   INT
+  LastReadAt          DATETIME2
+  -- Dùng để "đọc tiếp từ chỗ dở"
+  -- UNIQUE: (UserId, StoryId) — mỗi user chỉ có 1 progress per story
+  -- Cập nhật bằng UPSERT mỗi khi user đọc chapter
+
+TABLE: bookmarks
+  UserId    UNIQUEIDENTIFIER  FK → users
+  StoryId   UNIQUEIDENTIFIER  FK → stories
+  -- Theo dõi truyện yêu thích
+  -- UNIQUE: (UserId, StoryId)
+
+TABLE: ratings
+  UserId    UNIQUEIDENTIFIER  FK → users
+  StoryId   UNIQUEIDENTIFIER  FK → stories
+  Score     INT               -- 1 đến 5, có CHECK CONSTRAINT
+  Comment   NVARCHAR(2000)    nullable
+  -- UNIQUE: (UserId, StoryId) — mỗi user chỉ rate 1 lần per story
+  -- Khi upsert rating → trigger cập nhật AverageRating + RatingCount trên stories
+
+TABLE: comments
+  UserId            UNIQUEIDENTIFIER  FK → users
+  StoryId           UNIQUEIDENTIFIER  FK → stories
+  ChapterId         UNIQUEIDENTIFIER  FK → chapters (nullable)
+                                      -- null = comment trang truyện
+                                      -- có giá trị = comment trang chapter cụ thể
+  ParentCommentId   UNIQUEIDENTIFIER  FK → comments (self-ref, nullable)
+                                      -- null = comment gốc
+                                      -- có giá trị = reply (hỗ trợ 1 cấp)
+  Content           NVARCHAR(5000)    NOT NULL
+  LikeCount         INT               DEFAULT 0
+  IsHidden          BIT               DEFAULT false -- admin ẩn comment vi phạm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NHÓM 4 — KIẾM TIỀN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: subscriptions
+  UserId            UNIQUEIDENTIFIER  FK → users
+  PlanCode          NVARCHAR(50)      -- 'Basic' | 'Premium' | ...
+                                      -- dùng string thay vì FK sang bảng Plan
+                                      -- tránh lock schema khi thay đổi gói
+  Status            NVARCHAR(20)      -- 'Active' | 'Expired' | 'Cancelled' | 'PendingPayment'
+  StartDate         DATETIME2
+  EndDate           DATETIME2
+  Amount            DECIMAL(18,2)
+  PaymentProvider   NVARCHAR(50)      -- 'VNPay' | 'Momo' | 'Stripe' | 'Manual'
+  TransactionId     NVARCHAR(200)
+
+TABLE: affiliate_links
+  Name            NVARCHAR(200)   NOT NULL
+  TargetUrl       NVARCHAR(2000)  NOT NULL -- URL đích thực
+  TrackingCode    NVARCHAR(50)    UNIQUE
+                                  -- slug ngắn dùng trong URL redirect: /go/{TrackingCode}
+  Placement       NVARCHAR(30)    DEFAULT 'in-chapter'
+                                  -- 'in-chapter' | 'sidebar' | 'popup' | 'global'
+  Priority        INT             DEFAULT 0 -- ưu tiên khi nhiều link cùng match
+  IsActive        BIT             DEFAULT true
+  StartDate       DATETIME2       nullable
+  EndDate         DATETIME2       nullable
+
+TABLE: affiliate_link_stories   -- gắn affiliate vào truyện cụ thể (optional)
+  AffiliateLinkId   UNIQUEIDENTIFIER  FK → affiliate_links
+  StoryId           UNIQUEIDENTIFIER  FK → stories
+  PK: (AffiliateLinkId, StoryId)
+  -- Nếu 1 link không gắn story nào → link là global, hiển thị cho tất cả truyện
+
+TABLE: affiliate_clicks
+  AffiliateLinkId   UNIQUEIDENTIFIER  FK → affiliate_links
+  UserId            UNIQUEIDENTIFIER  FK → users (nullable — anonymous được phép click)
+  ChapterId         UNIQUEIDENTIFIER  FK → chapters (nullable)
+                                      -- chapter đang đọc khi click, dùng để phân tích funnel
+  IpAddress         NVARCHAR(45)
+  UserAgent         NVARCHAR(500)
+  Referrer          NVARCHAR(1000)
+  ClickedAt         DATETIME2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NHÓM 5 — ANALYTICS & TRACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: chapter_views              -- raw event mỗi lượt đọc
+  ChapterId   UNIQUEIDENTIFIER  FK → chapters
+  StoryId     UNIQUEIDENTIFIER  FK → stories
+                                -- denormalized, tránh JOIN khi aggregate "truyện hot"
+  UserId      UNIQUEIDENTIFIER  FK → users (nullable — anonymous)
+  SessionId   NVARCHAR(100)     -- cookie/localStorage cho anonymous tracking
+  IpAddress   NVARCHAR(45)
+  ViewedAt    DATETIME2
+  -- Dedup logic ở application layer: 1 SessionId + ChapterId = 1 view trong 30 phút
+  -- Bảng này sẽ lớn dần → cân nhắc partition theo tháng hoặc archive sau 90 ngày
+
+TABLE: daily_story_stats          -- aggregate chạy bởi background job lúc 00:00 UTC
+  StoryId           UNIQUEIDENTIFIER  FK → stories
+  StatDate          DATE              NOT NULL
+  ViewCount         INT               DEFAULT 0
+  UniqueVisitors    INT               DEFAULT 0
+  NewBookmarks      INT               DEFAULT 0
+  NewRatings        INT               DEFAULT 0
+  UNIQUE: (StoryId, StatDate)
+  -- Phục vụ dashboard "hot hôm nay / tuần này" mà không query chapter_views thô
+  -- Background job đọc chapter_views → group by → upsert vào bảng này
+
+================================================================
+KEY INDEXES (các index quan trọng nhất)
+================================================================
+
+-- Hot path: đọc truyện
+IX_Story_Slug                         UNIQUE
+IX_Story_Status_LastChapterAt         (Status, LastChapterAt DESC)
+IX_Story_Status_TotalViews            (Status, TotalViews DESC)
+IX_Story_StoryType_Status_LastChapterAt
+IX_Chapter_StoryId_ChapterNumber      UNIQUE — prev/next chapter
+
+-- Tác giả
+IX_Story_AuthorId_Status              (AuthorId, Status)
+IX_Author_Slug                        UNIQUE
+
+-- Affiliate redirect (cực hot)
+IX_AffiliateLink_TrackingCode         UNIQUE — /go/{code} lookup
+
+-- Analytics
+IX_ChapterView_ChapterId_ViewedAt
+IX_ChapterView_StoryId_ViewedAt
+IX_DailyStoryStat_StatDate_ViewCount  (StatDate DESC, ViewCount DESC)
+
+================================================================
+QUAN HỆ CHÍNH GIỮA CÁC BẢNG
+================================================================
+
+users           1 ──< refresh_tokens
+users           1 ──< stories           (UploadedByUserId, nullable)
+users           1 ──< user_reading_progresses
+users           1 ──< bookmarks
+users           1 ──< ratings
+users           1 ──< comments
+users           1 ──< subscriptions
+users           1 ──< affiliate_clicks  (nullable)
+users           1 ──< chapter_views     (nullable)
+
+authors         1 ──< stories
+
+categories      1 ──< categories        (self-ref: ParentId)
+categories      >──< stories            (qua story_categories)
+
+tags            >──< stories            (qua story_tags)
+
+stories         1 ──< chapters
+stories         1 ──< user_reading_progresses
+stories         1 ──< bookmarks
+stories         1 ──< ratings
+stories         1 ──< comments
+stories         1 ──< daily_story_stats
+stories         >──< affiliate_links    (qua affiliate_link_stories)
+
+chapters        1 ──< chapter_views
+chapters        1 ──< comments
+chapters        1 ──< affiliate_clicks  (nullable)
+
+affiliate_links 1 ──< affiliate_clicks
+affiliate_links >──< stories            (qua affiliate_link_stories)
+
+================================================================
+GHI CHÚ NGHIỆP VỤ QUAN TRỌNG
+================================================================
+
+1. SOFT DELETE
+   Tất cả bảng có IsDeleted. Mọi query cần thêm WHERE IsDeleted = 0.
+   Dùng Global Query Filter trong EF Core để tự động áp dụng.
+
+2. DENORMALIZED COUNTERS
+   stories.TotalChapters, TotalViews, AverageRating, RatingCount
+   chapters.ViewCount
+   → Không tính realtime bằng COUNT(*). Background job cập nhật định kỳ.
+   → Khi cần realtime (vừa publish chapter), update trực tiếp bằng
+     ExecuteUpdateAsync thay vì load toàn bộ entity.
+
+3. AUTHOR vs UPLOADED_BY
+   AuthorId    = tác giả sáng tác (thực thể nội dung)
+   UploadedByUserId = người đưa lên hệ thống (thực thể vận hành)
+   Hai khái niệm hoàn toàn khác nhau.
+
+4. STORETYPE vs STATUS
+   StoryType = đặc điểm nội dung (Serial/Completed), do bản chất truyện quyết định
+   Status    = trạng thái vận hành (Draft/Publishing/Completed/Paused), admin kiểm soát
+   Một truyện Serial vẫn có thể có Status = Paused (dịch giả nghỉ).
+
+5. AFFILIATE GLOBAL vs STORY-SPECIFIC
+   Nếu affiliate_link_stories không có row nào cho một link
+   → link đó là global, hiển thị cho tất cả truyện.
+   Nếu có row → chỉ hiển thị cho truyện được gắn.
+
+6. ANONYMOUS TRACKING
+   chapter_views và affiliate_clicks cho phép UserId = null.
+   Anonymous user được track bằng SessionId (cookie) + IpAddress.
+
+7. CHAPTER NAVIGATION
+   Luôn dùng ChapterNumber để prev/next, không dùng Id.
+   Query: WHERE StoryId = @id AND ChapterNumber = @current + 1
+
+8. SUBSCRIPTION CHECK
+   Để kiểm tra user có sub active:
+   WHERE UserId = @id AND Status = 'Active' AND EndDate > GETUTCDATE()
+   Index: (UserId, Status, EndDate)

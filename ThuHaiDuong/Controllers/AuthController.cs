@@ -15,11 +15,11 @@ namespace ThuHaiDuong.Controllers
         {
             _authService = authService;
         }
-        [HttpPost("register")]
+        /*[HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterInput request)
         {
             return Ok(await _authService.RegisterAsync(request));
-        }
+        }*/
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginInput request)

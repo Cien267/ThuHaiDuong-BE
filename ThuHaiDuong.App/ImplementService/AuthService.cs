@@ -110,7 +110,7 @@ namespace ThuHaiDuong.Application.ImplementService
             if (user == null)
             {
                 throw new ResponseErrorObject(
-                    "Incorrect email.",
+                    "Email không hợp lệ.",
                     StatusCodes.Status400BadRequest
                 );
             }
@@ -119,7 +119,7 @@ namespace ThuHaiDuong.Application.ImplementService
             if (!checkPass)
             {
                 throw new ResponseErrorObject(
-                    "Incorrect password.",
+                    "Password không hợp lệ.",
                     StatusCodes.Status400BadRequest
                 );
             }
@@ -235,7 +235,7 @@ namespace ThuHaiDuong.Application.ImplementService
                 );
             }
 
-            var user = await _baseUserRepository.BuildQueryable(new List<string> { "Brokerage" }, u => u.Id == userId.Value)
+            var user = await _baseUserRepository.BuildQueryable(new List<string> {}, u => u.Id == userId.Value)
                 .FirstOrDefaultAsync();
             if (user == null)
             {
