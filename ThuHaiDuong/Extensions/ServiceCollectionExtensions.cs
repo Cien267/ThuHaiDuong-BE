@@ -27,6 +27,14 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddCategoryServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<Category>, BaseRepository<Category>>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
