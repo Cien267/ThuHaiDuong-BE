@@ -35,11 +35,30 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddTagServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<Tag>, BaseRepository<Tag>>();
+        services.AddScoped<ITagService, TagService>();
+        services.AddScoped<ITagRepository, TagRepository>();
+        return services;
+    }
+    
+    public static IServiceCollection AddAuthorServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<Author>, BaseRepository<Author>>();
+        services.AddScoped<IAuthorService, AuthorService>();
+        services.AddScoped<IAuthorRepository, AuthorRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
             .AddAuthServices()
-            .AddEncryptionServices();
+            .AddEncryptionServices()
+            .AddCategoryServices()
+            .AddTagServices()
+            .AddAuthorServices();
 
         return services;
     }

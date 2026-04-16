@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ThuHaiDuong.Application.Payloads.InputModels.Auth
+namespace ThuHaiDuong.Application.Payloads.InputModels.Admin.Auth
 {
     public class UpdateProfileInput
     {

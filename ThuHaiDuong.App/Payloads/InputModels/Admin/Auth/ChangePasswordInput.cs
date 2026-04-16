@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ThuHaiDuong.Application.Payloads.InputModels.Auth
+﻿namespace ThuHaiDuong.Application.Payloads.InputModels.Admin.Auth
 {
     public class ChangePasswordInput
     {

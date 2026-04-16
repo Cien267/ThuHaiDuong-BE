@@ -1,5 +1,4 @@
-﻿using ThuHaiDuong.Application.Payloads.InputModels.Auth;
-using ThuHaiDuong.Application.Payloads.InputModels.User;
+﻿using ThuHaiDuong.Application.Payloads.InputModels.User;
 using ThuHaiDuong.Application.Payloads.ResultModels.User;
 using ThuHaiDuong.Shared.Models;
 

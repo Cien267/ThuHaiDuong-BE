@@ -1,4 +1,4 @@
-using ThuHaiDuong.Application.InterfaceService.Common;
+using ThuHaiDuong.Shared.Interface;
 
 namespace ThuHaiDuong.Application.Payloads.InputModels.Common;
 

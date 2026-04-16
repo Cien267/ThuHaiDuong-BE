@@ -23,6 +23,7 @@ public class Story : BaseEntity
  
     // "Draft" | "Publishing" | "Completed" | "Paused"
     public string Status { get; set; } = "Draft";
+    public string? RejectionReason { get; set; }
  
     // Content characteristic — completely independent from Status
     // "Serial"    = chapters are being released on schedule (translated/ongoing works)
@@ -101,6 +102,10 @@ public static class StoryModelBuilderExtensions
                 .IsRequired()
                 .HasMaxLength(20)
                 .HasDefaultValue("Draft");
+            
+            entity.Property(e => e.RejectionReason)
+                .HasMaxLength(1000)
+                .IsRequired(false);
  
             entity.Property(e => e.StoryType)
                 .IsRequired()

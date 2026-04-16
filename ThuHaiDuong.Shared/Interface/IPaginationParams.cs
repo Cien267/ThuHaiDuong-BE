@@ -1,4 +1,4 @@
-namespace ThuHaiDuong.Application.InterfaceService.Common;
+namespace ThuHaiDuong.Shared.Interface;
 
 public class IPaginationParams
 {

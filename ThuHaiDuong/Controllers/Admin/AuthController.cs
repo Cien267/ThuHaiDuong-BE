@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Auth;
+using ThuHaiDuong.Application.Payloads.InputModels.Admin.Auth;
 
 namespace ThuHaiDuong.Controllers
 {
