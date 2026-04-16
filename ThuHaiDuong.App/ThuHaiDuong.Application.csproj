@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Payloads\InputModels\User\" />
+    <Folder Include="Payloads\InputModels\Admin\Bookmark\" />
   </ItemGroup>
 
 </Project>

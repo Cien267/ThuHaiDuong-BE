@@ -4,7 +4,7 @@ namespace ThuHaiDuong.Domain.Entities;
 
 public class Comment : BaseEntity
 {
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public Guid StoryId { get; set; }
  
     // Null = comment on the story page; has value = comment on a specific chapter page
@@ -16,6 +16,8 @@ public class Comment : BaseEntity
     public string Content { get; set; } = null!;
     public int LikeCount { get; set; } = 0;
     public bool IsHidden { get; set; } = false;
+    public string? GuestName { get; set; }
+    public string? GuestEmail { get; set; }
  
     // Navigation
     public virtual User User { get; set; } = null!;
@@ -34,7 +36,7 @@ public static class CommentModelBuilderExtensions
             entity.ToTable("comments");
             entity.HasKey(e => e.Id);
  
-            entity.Property(e => e.UserId).IsRequired();
+            entity.Property(e => e.UserId);
             entity.Property(e => e.StoryId).IsRequired();
  
             entity.Property(e => e.ChapterId)
@@ -54,6 +56,12 @@ public static class CommentModelBuilderExtensions
             entity.Property(e => e.IsHidden)
                 .IsRequired()
                 .HasDefaultValue(false);
+            
+            entity.Property(e => e.GuestName)
+                .HasMaxLength(100);
+ 
+            entity.Property(e => e.GuestEmail)
+                .HasMaxLength(256);
  
             entity.Property(e => e.CreatedAt)
                 .IsRequired()
