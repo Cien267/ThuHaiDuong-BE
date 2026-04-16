@@ -1,5 +1,5 @@
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Chapter;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Chapter;
+using ThuHaiDuong.Application.Payloads.InputModels.Chapter;
+using ThuHaiDuong.Application.Payloads.ResultModels.Chapter;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Chapter;
 using ThuHaiDuong.Shared.Models;
 

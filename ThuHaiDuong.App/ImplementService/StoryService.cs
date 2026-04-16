@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Story;
+using ThuHaiDuong.Application.Payloads.InputModels.Story;
 using ThuHaiDuong.Application.Payloads.Responses;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Story;
+using ThuHaiDuong.Application.Payloads.ResultModels.Story;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Category;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Chapter;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Story;

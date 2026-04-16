@@ -1,5 +1,5 @@
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Tag;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Tag;
+using ThuHaiDuong.Application.Payloads.InputModels.Tag;
+using ThuHaiDuong.Application.Payloads.ResultModels.Tag;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Tag;
 using ThuHaiDuong.Shared.Models;
 

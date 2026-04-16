@@ -1,4 +1,4 @@
-﻿using ThuHaiDuong.Application.Payloads.InputModels.Admin.Auth;
+﻿using ThuHaiDuong.Application.Payloads.InputModels.Auth;
 using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Application.Payloads.ResultModels.User;

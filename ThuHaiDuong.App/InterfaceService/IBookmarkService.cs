@@ -1,4 +1,4 @@
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Bookmark;
+using ThuHaiDuong.Application.Payloads.ResultModels.Bookmark;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Bookmark;
 
 namespace ThuHaiDuong.Application.InterfaceService;

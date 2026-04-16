@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Comment;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Comment;
+using ThuHaiDuong.Application.Payloads.InputModels.Comment;
+using ThuHaiDuong.Application.Payloads.ResultModels.Comment;
 using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Domain.InterfaceRepositories;
 using ThuHaiDuong.Infrastructure.DataContext;

@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Application.InterfaceService;
 using ThuHaiDuong.Application.Payloads.ResultModels.User;
 using ThuHaiDuong.Application.Payloads.Responses;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Auth;
+using ThuHaiDuong.Application.Payloads.InputModels.Auth;
 
 namespace ThuHaiDuong.Application.ImplementService
 {

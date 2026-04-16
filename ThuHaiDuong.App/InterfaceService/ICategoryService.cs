@@ -1,5 +1,5 @@
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Category;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Category;
+using ThuHaiDuong.Application.Payloads.InputModels.Category;
+using ThuHaiDuong.Application.Payloads.ResultModels.Category;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Category;
 using ThuHaiDuong.Shared.Models;
 

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using ThuHaiDuong.Application.InterfaceService;
 using ThuHaiDuong.Application.Payloads.Responses;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Bookmark;
+using ThuHaiDuong.Application.Payloads.ResultModels.Bookmark;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Bookmark;
 using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Domain.InterfaceRepositories;

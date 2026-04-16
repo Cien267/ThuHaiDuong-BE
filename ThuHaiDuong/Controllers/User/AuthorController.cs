@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Author;
+using ThuHaiDuong.Application.Payloads.InputModels.Author;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Author;
 using ThuHaiDuong.Shared.Models;
 

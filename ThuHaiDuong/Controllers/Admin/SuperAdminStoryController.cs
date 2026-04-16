@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Story;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Story;
+using ThuHaiDuong.Application.Payloads.InputModels.Story;
+using ThuHaiDuong.Application.Payloads.ResultModels.Story;
 using ThuHaiDuong.Shared.Constants;
 using ThuHaiDuong.Shared.Models;
 

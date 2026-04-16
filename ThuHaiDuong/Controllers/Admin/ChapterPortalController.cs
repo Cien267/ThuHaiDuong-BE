@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Chapter;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Chapter;
+using ThuHaiDuong.Application.Payloads.InputModels.Chapter;
+using ThuHaiDuong.Application.Payloads.ResultModels.Chapter;
 
 namespace ThuHaiDuong.Controllers;
 

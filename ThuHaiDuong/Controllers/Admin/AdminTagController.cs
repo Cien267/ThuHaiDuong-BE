@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Tag;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Tag;
+using ThuHaiDuong.Application.Payloads.InputModels.Tag;
+using ThuHaiDuong.Application.Payloads.ResultModels.Tag;
 using ThuHaiDuong.Shared.Models;
 
 namespace ThuHaiDuong.Controllers;

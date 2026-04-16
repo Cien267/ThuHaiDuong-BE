@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Author;
+using ThuHaiDuong.Application.Payloads.InputModels.Author;
 using ThuHaiDuong.Application.Payloads.Responses;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Author;
+using ThuHaiDuong.Application.Payloads.ResultModels.Author;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Author;
 using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Domain.InterfaceRepositories;

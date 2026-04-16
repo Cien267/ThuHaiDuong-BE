@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Bookmark;
+using ThuHaiDuong.Application.Payloads.ResultModels.Bookmark;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Bookmark;
 
 namespace ThuHaiDuong.Controllers.User;

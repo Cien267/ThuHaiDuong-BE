@@ -36,8 +36,4 @@
     <ProjectReference Include="..\ThuHaiDuong.Shared\ThuHaiDuong.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Payloads\InputModels\Admin\Bookmark\" />
-  </ItemGroup>
-
 </Project>

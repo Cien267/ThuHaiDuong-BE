@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.InputModels.Admin.Comment;
-using ThuHaiDuong.Application.Payloads.ResultModels.Admin.Comment;
+using ThuHaiDuong.Application.Payloads.InputModels.Comment;
+using ThuHaiDuong.Application.Payloads.ResultModels.Comment;
 using ThuHaiDuong.Shared.Models;
 
 namespace ThuHaiDuong.Controllers.User;
