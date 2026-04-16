@@ -51,6 +51,22 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddStoryServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<Story>, BaseRepository<Story>>();
+        services.AddScoped<IStoryService, StoryService>();
+        services.AddScoped<IStoryRepository, StoryRepository>();
+        return services;
+    }
+    
+    public static IServiceCollection AddChapterServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<Chapter>, BaseRepository<Chapter>>();
+        services.AddScoped<IChapterService, ChapterService>();
+        services.AddScoped<IChapterRepository, ChapterRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
@@ -58,7 +74,9 @@ public static class ServiceCollectionExtensions
             .AddEncryptionServices()
             .AddCategoryServices()
             .AddTagServices()
-            .AddAuthorServices();
+            .AddAuthorServices()
+            .AddStoryServices()
+            .AddChapterServices();
 
         return services;
     }
