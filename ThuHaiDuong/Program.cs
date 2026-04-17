@@ -5,11 +5,13 @@ using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Middlewares;
 using ThuHaiDuong.Extensions;
 using ThuHaiDuong.Filters;
+using ThuHaiDuong.Infrastructure.BackgroundJobs;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAllServices(builder.Configuration);
+builder.Services.AddHostedService<DailyAggregationJob>();
 
 var app = builder.Build();
 

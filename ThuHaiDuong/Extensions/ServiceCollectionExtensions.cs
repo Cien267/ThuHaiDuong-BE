@@ -67,6 +67,22 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddAffiliateServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<AffiliateClick>, BaseRepository<AffiliateClick>>();
+        services.AddScoped<IBaseRepository<AffiliateLink>, BaseRepository<AffiliateLink>>();
+        services.AddScoped<IAffiliateService, AffiliateService>();
+        services.AddScoped<IAffiliateRepository, AffiliateRepository>();
+        return services;
+    }
+    
+    public static IServiceCollection AddAnalyticsServices(this IServiceCollection services)
+    {
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
@@ -76,7 +92,9 @@ public static class ServiceCollectionExtensions
             .AddTagServices()
             .AddAuthorServices()
             .AddStoryServices()
-            .AddChapterServices();
+            .AddChapterServices()
+            .AddAffiliateServices()
+            .AddAnalyticsServices();
 
         return services;
     }
