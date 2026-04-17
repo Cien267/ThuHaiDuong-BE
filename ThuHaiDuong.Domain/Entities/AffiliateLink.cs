@@ -22,6 +22,7 @@ public class AffiliateLink : BaseEntity
  
     // Navigation
     public virtual ICollection<AffiliateLinkStory> AffiliateLinkStories { get; set; } = [];
+    public virtual ICollection<AffiliateLinkChapter> AffiliateLinkChapters { get; set; } = [];
     public virtual ICollection<AffiliateClick> AffiliateClicks { get; set; } = [];
 }
  

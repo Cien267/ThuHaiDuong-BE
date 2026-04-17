@@ -11,6 +11,7 @@ namespace ThuHaiDuong.Infrastructure.DataContext
         public virtual DbSet<AffiliateClick> AffiliateClicks { get; set; }
         public virtual DbSet<AffiliateLink>  AffiliateLinks { get; set; }
         public virtual DbSet<AffiliateLinkStory>  AffiliateLinkStories { get; set; }
+        public virtual DbSet<AffiliateLinkChapter>  AffiliateLinkChapters { get; set; }
         public virtual DbSet<Bookmark> Bookmarks { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Chapter> Chapters { get; set; }
@@ -43,6 +44,7 @@ namespace ThuHaiDuong.Infrastructure.DataContext
             modelBuilder.BuildAffiliateClickModel();
             modelBuilder.BuildAffiliateLinkModel();
             modelBuilder.BuildAffiliateLinkStoryModel();
+            modelBuilder.BuildAffiliateLinkChapterModel();
             modelBuilder.BuildBookmarkModel();
             modelBuilder.BuildCategoryModel();
             modelBuilder.BuildChapterModel();
