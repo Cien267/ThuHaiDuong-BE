@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Infrastructure.DataContext;
 using Hangfire;
+using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Middlewares;
 using ThuHaiDuong.Extensions;
@@ -12,6 +13,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAllServices(builder.Configuration);
 builder.Services.AddHostedService<DailyAggregationJob>();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value!.Errors
+                    .Select(e => e.ErrorMessage)
+                    .ToArray()
+            );
+ 
+        var response = new
+        {
+            message    = "Validation failed.",
+            statusCode = 400,
+            errors,
+        };
+ 
+        return new BadRequestObjectResult(response);
+    };
+});
 
 var app = builder.Build();
 
