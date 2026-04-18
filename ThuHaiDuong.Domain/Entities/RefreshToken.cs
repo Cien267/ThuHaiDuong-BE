@@ -9,7 +9,7 @@ namespace ThuHaiDuong.Domain.Entities
 
         public string Token { get; set; } = null!;
 
-        public DateTime ExpiryTime { get; set; }
+        public DateTime ExpiresAt { get; set; }
 
         public bool IsRevoked { get; set; }
         public DateTime? RevokedAt { get; set; }
@@ -33,7 +33,7 @@ namespace ThuHaiDuong.Domain.Entities
                     .IsRequired()
                     .HasMaxLength(500);
 
-                entity.Property(e => e.ExpiryTime)
+                entity.Property(e => e.ExpiresAt)
                     .IsRequired();
 
                 entity.Property(e => e.IsRevoked)
@@ -59,11 +59,11 @@ namespace ThuHaiDuong.Domain.Entities
                 entity.HasIndex(e => e.UserId)
                     .HasDatabaseName("IX_RefreshToken_UserId");
 
-                entity.HasIndex(e => new { e.UserId, e.IsRevoked, e.ExpiryTime })
-                    .HasDatabaseName("IX_RefreshToken_UserId_IsRevoked_ExpiryTime");
+                entity.HasIndex(e => new { e.UserId, e.IsRevoked, e.ExpiresAt })
+                    .HasDatabaseName("IX_RefreshToken_UserId_IsRevoked_ExpiresAt");
 
-                entity.HasIndex(e => e.ExpiryTime)
-                    .HasDatabaseName("IX_RefreshToken_ExpiryTime");
+                entity.HasIndex(e => e.ExpiresAt)
+                    .HasDatabaseName("IX_RefreshToken_ExpiresAt");
             });
         }
     }

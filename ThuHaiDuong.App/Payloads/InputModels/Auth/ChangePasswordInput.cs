@@ -1,9 +1,13 @@
-﻿namespace ThuHaiDuong.Application.Payloads.InputModels.Auth
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ThuHaiDuong.Application.Payloads.InputModels.Auth
 {
     public class ChangePasswordInput
     {
-        public string CurrentPassword { get; set; }
-        public string NewPassword { get; set; }
-        public string ConfirmPassword { get; set; }
+        [Required]
+        public string CurrentPassword { get; set; } = null!;
+ 
+        [Required, MinLength(6), MaxLength(256)]
+        public string NewPassword { get; set; } = null!;
     }
 }

@@ -9,15 +9,23 @@ namespace ThuHaiDuong.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddAuthServices(this IServiceCollection services)
+    public static IServiceCollection AddBaseServices(this IServiceCollection services)
     {
         services.AddScoped<IDbContext, AppDbContext>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        return services;
+    }
+    
+    public static IServiceCollection AddAuthServices(this IServiceCollection services)
+    {
         services.AddScoped<IBaseRepository<RefreshToken>, BaseRepository<RefreshToken>>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBaseRepository<User>, BaseRepository<User>>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         return services;
     }
     
@@ -95,6 +103,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
+            .AddBaseServices()
             .AddAuthServices()
             .AddEncryptionServices()
             .AddCategoryServices()

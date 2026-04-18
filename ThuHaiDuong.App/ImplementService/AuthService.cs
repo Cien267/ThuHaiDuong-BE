@@ -2,381 +2,340 @@
 using Microsoft.Extensions.Configuration;
 using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Domain.InterfaceRepositories;
-using ThuHaiDuong.Domain.Validation;
-using BCryptNet = BCrypt.Net.BCrypt;
-using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
-using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Application.Payloads.ResultModels.User;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Application.Payloads.InputModels.Auth;
+using ThuHaiDuong.Application.Payloads.ResultModels.Auth;
 
-namespace ThuHaiDuong.Application.ImplementService
+namespace ThuHaiDuong.Application.ImplementService;
+
+public class AuthService : IAuthService
 {
-    public class AuthService : IAuthService
+    private readonly IBaseRepository<User>         _userRepo;
+    private readonly IBaseRepository<RefreshToken> _tokenRepo;
+    private readonly IAuthRepository               _authRepo;
+    private readonly IJwtService                   _jwtService;
+    private readonly IGoogleAuthService            _googleAuth;
+    private readonly IConfiguration                _config;
+ 
+    public AuthService(
+        IBaseRepository<User>         userRepo,
+        IBaseRepository<RefreshToken> tokenRepo,
+        IAuthRepository               authRepo,
+        IJwtService                   jwtService,
+        IGoogleAuthService            googleAuth,
+        IConfiguration                config)
     {
-        private readonly IBaseRepository<User> _baseUserRepository;
-        private readonly IConfiguration _configuration;
-        private readonly IUserRepository _userRepository;
-        private readonly IBaseRepository<RefreshToken> _baseRefreshTokenRepository;
-        private readonly ICurrentUserService _currentUserService;
-        public AuthService(IBaseRepository<User> baseUserRepository, IConfiguration configuration, IUserRepository userRepository, 
-            IBaseRepository<RefreshToken> baseRefreshTokenRepository, ICurrentUserService currentUserService)
-        {
-            _baseUserRepository = baseUserRepository;
-            _configuration = configuration;
-            _userRepository = userRepository;
-            _baseRefreshTokenRepository = baseRefreshTokenRepository;
-            _currentUserService = currentUserService;
-        }
-
-        #region Private Methods
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
-        {
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
-            _ = int.TryParse(_configuration["JWT:TokenValidityInHours"], out int tokenValidityInHours);
-            var expirationUTC = DateTime.Now.AddHours(tokenValidityInHours);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
-                expires: expirationUTC,
-                claims: authClaims,
-                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-            );
-            return token;
-        }
-
-        private string GenerateRefreshToken()
-        {
-            var randomNumber = new byte[64];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomNumber);
-            }
-            return Convert.ToBase64String(randomNumber);
-        }
-        #endregion
-
-        public async Task<ResponseObject<LoginResult>> GetJwtTokenAsync(User user)
-        {
-            var authClaims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? ""),
-                new Claim("UserId", user.Id.ToString()),
-            };
-
-            var jwtToken = GetToken(authClaims);
-            var refreshToken = GenerateRefreshToken();
-            if (!int.TryParse(_configuration["JWT:RefreshTokenValidity"], out int refreshTokenValidity))
-            {
-                refreshTokenValidity = 24;
-            }
-
-            var rf = new RefreshToken
-            {
-                UserId = user.Id,
-                Token = refreshToken,
-                ExpiryTime = DateTime.UtcNow.AddHours(refreshTokenValidity),
-                IsRevoked = false,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _baseRefreshTokenRepository.CreateAsync(rf);
-
-            return new ResponseObject<LoginResult>
-            {
-                Status = 200,
-                Message = "Create token successfully!",
-                Data = new LoginResult
-                {
-                    AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken),
-                    RefreshToken = refreshToken,
-                }
-            };
-        }
-
-
-        public async Task<LoginResult> LoginAsync(LoginInput request)
-        {
-            var user = await _baseUserRepository.GetAsync(x => x.Email == request.Email);
-            if (user == null)
-            {
-                throw new ResponseErrorObject(
-                    "Email không hợp lệ.",
-                    StatusCodes.Status400BadRequest
-                );
-            }
-
-            bool checkPass = BCryptNet.Verify(request.Password, user.Password);
-            if (!checkPass)
-            {
-                throw new ResponseErrorObject(
-                    "Password không hợp lệ.",
-                    StatusCodes.Status400BadRequest
-                );
-            }
-
-            var jwtTokenResponse = await GetJwtTokenAsync(user);
-            if (jwtTokenResponse.Data == null)
-            {
-                throw new ResponseErrorObject(
-                    "Token generation failed",
-                    StatusCodes.Status500InternalServerError
-                );
-            }
-            
-            return new LoginResult
-            {
-                User = new UserResult
-                {
-                    Id = user.Id,
-                    UserName = user.UserName,
-                    Avatar = user.Avatar,
-                    Email = user.Email,
-                    FullName = user.FullName,
-                    PhoneNumber = user.PhoneNumber,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    DeletedAt = user.DeletedAt,
-                },
-                AccessToken = jwtTokenResponse.Data.AccessToken,
-                RefreshToken = jwtTokenResponse.Data.RefreshToken
-            };
-        }
-        
-        public async Task<UserResult> RegisterAsync(RegisterInput request)
-        {
-            if (!ValidateInput.IsValidEmail(request.Email))
-            {
-                throw new ResponseErrorObject(
-                    "Invalid email.",
-                    StatusCodes.Status400BadRequest
-                );
-            }
-
-            if (await _userRepository.GetUserByEmail(request.Email) != null)
-            {
-                throw new ResponseErrorObject(
-                    "This email address is already in use.",
-                    StatusCodes.Status400BadRequest
-                );
-            }
-
-            if (await _userRepository.GetUserByUsername(request.UserName) != null)
-            {
-                throw new ResponseErrorObject(
-                    "This username is already in use.",
-                    StatusCodes.Status400BadRequest
-                );
-            }
-
-            try
-            {
-                var user = new User
-                {
-                    Avatar =
-                        "https://static.vecteezy.com/system/resources/previews/009/292/244/original/default-avatar-icon-of-social-media-user-vector.jpg",
-                    PhoneNumber = request.PhoneNumber ?? "",
-                    FullName = request.FullName,
-                    Password = BCryptNet.HashPassword(request.Password),
-                    UserName = request.UserName,
-                    Email = request.Email,
-                    CreatedAt = DateTime.UtcNow,
-                };
-
-                user = await _baseUserRepository.CreateAsync(user);
-
-            
-                return new UserResult
-                {
-                    Id = user.Id,
-                    Avatar = user.Avatar,
-                    FullName = user.FullName,
-                    UserName = user.UserName,
-                    PhoneNumber = user.PhoneNumber,
-                    Email = user.Email,
-                };
-            }
-            catch (Exception e)
-            {
-                throw new ResponseErrorObject(e.Message, StatusCodes.Status400BadRequest);
-            }
-        }
-        
-        public async Task LogoutAsync()
-        {
-            var userId = _currentUserService.GetUserId();
-            if (!userId.HasValue)
-            {
-                throw new ResponseErrorObject(
-                    "User is not authenticated",
-                    StatusCodes.Status401Unauthorized
-                );
-            }
-            await _userRepository.RevokeRefreshTokensAsync(userId.Value);
-        }
-
-        public async Task<UserResult> GetUserInfoAsync()
-        {
-            var userId = _currentUserService.GetUserId();
-            if (!userId.HasValue)
-            {
-                throw new ResponseErrorObject(
-                    "User is not authenticated",
-                    StatusCodes.Status401Unauthorized
-                );
-            }
-
-            var user = await _baseUserRepository.BuildQueryable(new List<string> {}, u => u.Id == userId.Value)
-                .FirstOrDefaultAsync();
-            if (user == null)
-            {
-                throw new ResponseErrorObject(
-                    "User not found.",
-                    StatusCodes.Status404NotFound
-                );
-            }
-
-            return new UserResult
-            {
-                Id = user.Id,
-                UserName = user.UserName,
-                Avatar = user.Avatar,
-                Email = user.Email,
-                FullName = user.FullName,
-                PhoneNumber = user.PhoneNumber,
-                CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt,
-                DeletedAt = user.DeletedAt,
-            };
-        }
-
-        public async Task<ResponseObject<UserResult>> UpdateProfileAsync(Guid userId, UpdateProfileInput request)
-        {
-            try
-            {
-                var currentUserId = _currentUserService.GetUserId();
-                if (!currentUserId.HasValue)
-                {
-                    throw new ResponseErrorObject(
-                        "User is not authenticated",
-                        StatusCodes.Status401Unauthorized
-                    );
-                }
-
-                if (currentUserId != userId)
-                {
-                    throw new ResponseErrorObject(
-                        "You are not allowed to update this user",
-                        StatusCodes.Status403Forbidden
-                    );
-                }
-
-
-                var existingUser = await _baseUserRepository.GetByIdAsync(userId);
-                if (existingUser == null)
-                {
-                    throw new ResponseErrorObject("User not found", StatusCodes.Status404NotFound);
-                }
-
-                var userByEmail = await _userRepository.GetUserByEmail(request.Email);
-                if (!string.IsNullOrWhiteSpace(request.Email) &&
-                    userByEmail != null && userByEmail.Id != existingUser.Id)
-                {
-                    throw new ResponseErrorObject("Email already exists", StatusCodes.Status400BadRequest);
-                }
-
-
-                existingUser.FullName = request.FullName;
-                existingUser.Email = request.Email;
-                existingUser.PhoneNumber = request.PhoneNumber;
-                existingUser.UpdatedAt = DateTime.UtcNow;
-
-                await _userRepository.UpdateAsync(existingUser);
-
-
-                var responseData =  new UserResult
-                {
-                    Id = existingUser.Id,
-                    UserName = existingUser.UserName,
-                    Avatar = existingUser.Avatar,
-                    Email = existingUser.Email,
-                    FullName = existingUser.FullName,
-                    PhoneNumber = existingUser.PhoneNumber,
-                    CreatedAt = existingUser.CreatedAt,
-                    UpdatedAt = existingUser.UpdatedAt,
-                    DeletedAt = existingUser.DeletedAt,
-                };
-
-                return new ResponseObject<UserResult>
-                {
-                    Status = StatusCodes.Status200OK,
-                    Message = "User updated successfully",
-                    Data = responseData
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new ResponseErrorObject(ex.Message, StatusCodes.Status400BadRequest);
-            }
-        }
-
-
-        public async Task<ResponseObject<UserResult>> ChangePasswordAsync(Guid userId, ChangePasswordInput request)
-        {
-            try
-            {
-                var user = await _baseUserRepository.GetByIdAsync(userId);
-                if (user == null)
-                {
-                    throw new ResponseErrorObject("User not found", StatusCodes.Status404NotFound);
-                }
-
-                bool checkPass = BCryptNet.Verify(request.CurrentPassword, user.Password);
-                if (!checkPass)
-                {
-                    throw new ResponseErrorObject("Incorrect old password", StatusCodes.Status400BadRequest);
-                }
-
-                if (!request.NewPassword.Equals(request.ConfirmPassword))
-                {
-                    throw new ResponseErrorObject("Passwords do not match", StatusCodes.Status400BadRequest);
-                }
-
-                user.Password = BCryptNet.HashPassword(request.NewPassword);
-                user.UpdatedAt = DateTime.Now;
-                await _baseUserRepository.UpdateAsync(user);
-                var responseData = new UserResult
-                {
-                    Id = user.Id,
-                    Avatar = user.Avatar,
-                    FullName = user.FullName,
-                    UserName = user.UserName,
-                    PhoneNumber = user.PhoneNumber,
-                    Email = user.Email,
-                };
-                
-                return new ResponseObject<UserResult>
-                {
-                    Status = StatusCodes.Status200OK,
-                    Message = "Password changed successfully",
-                    Data = responseData
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new ResponseErrorObject(ex.Message, StatusCodes.Status400BadRequest);
-            }
-        }
-
-        
+        _userRepo   = userRepo;
+        _tokenRepo  = tokenRepo;
+        _authRepo   = authRepo;
+        _jwtService = jwtService;
+        _googleAuth = googleAuth;
+        _config     = config;
     }
+ 
+    // ── REGISTER (Reader only) ────────────────────────────────────────────────
+ 
+    public async Task<AuthResult> RegisterAsync(
+        RegisterInput input, string? ipAddress, string? userAgent)
+    {
+        if (await _authRepo.EmailExistsAsync(input.Email))
+            throw new ResponseErrorObject(
+                "Email is already in use.", StatusCodes.Status409Conflict);
+ 
+        if (await _authRepo.UserNameExistsAsync(input.UserName))
+            throw new ResponseErrorObject(
+                "Username is already taken.", StatusCodes.Status409Conflict);
+ 
+        var user = new User
+        {
+            UserName = input.UserName.Trim(),
+            Email    = input.Email.ToLower().Trim(),
+            Password = BCrypt.Net.BCrypt.HashPassword(input.Password),
+            FullName = input.FullName?.Trim(),
+            Role     = "Reader",
+            IsActive = true,
+        };
+ 
+        await _userRepo.CreateAsync(user);
+ 
+        return await IssueTokensAsync(user, ipAddress, userAgent);
+    }
+ 
+    // ── LOGIN CLIENT (Reader only) ────────────────────────────────────────────
+ 
+    public async Task<AuthResult> ClientLoginAsync(
+        LoginInput input, string? ipAddress, string? userAgent)
+    {
+        var user = await _authRepo.GetByEmailAsync(input.Email)
+            ?? throw new ResponseErrorObject(
+                "Invalid email or password.", StatusCodes.Status401Unauthorized);
+ 
+        // Chặn Staff cố login vào client portal
+        if (user.Role != "Reader")
+            throw new ResponseErrorObject(
+                "Please use the admin portal to login.",
+                StatusCodes.Status403Forbidden);
+ 
+        if (!user.IsActive)
+            throw new ResponseErrorObject(
+                "Account is disabled. Please contact support.",
+                StatusCodes.Status403Forbidden);
+ 
+        if (!BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
+            throw new ResponseErrorObject(
+                "Invalid email or password.", StatusCodes.Status401Unauthorized);
+ 
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userRepo.UpdateAsync(user);
+ 
+        return await IssueTokensAsync(user, ipAddress, userAgent);
+    }
+ 
+    // ── LOGIN ADMIN (Staff only) ──────────────────────────────────────────────
+ 
+    public async Task<AuthResult> AdminLoginAsync(
+        LoginInput input, string? ipAddress, string? userAgent)
+    {
+        var user = await _authRepo.GetByEmailAsync(input.Email)
+            ?? throw new ResponseErrorObject(
+                "Invalid email or password.", StatusCodes.Status401Unauthorized);
+ 
+        // Chặn Reader cố login vào admin portal
+        if (user.Role == "Reader")
+            throw new ResponseErrorObject(
+                "You do not have permission to access the admin portal.",
+                StatusCodes.Status403Forbidden);
+ 
+        if (!user.IsActive)
+            throw new ResponseErrorObject(
+                "Account is disabled. Please contact your administrator.",
+                StatusCodes.Status403Forbidden);
+ 
+        if (!BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
+            throw new ResponseErrorObject(
+                "Invalid email or password.", StatusCodes.Status401Unauthorized);
+ 
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userRepo.UpdateAsync(user);
+ 
+        return await IssueTokensAsync(user, ipAddress, userAgent);
+    }
+ 
+    // ── GOOGLE LOGIN (Reader only) ────────────────────────────────────────────
+ 
+    public async Task<AuthResult> GoogleLoginAsync(
+        GoogleLoginInput input, string? ipAddress, string? userAgent)
+    {
+        var googleUser = await _googleAuth.VerifyIdTokenAsync(input.IdToken);
+ 
+        var user = await _authRepo.GetByEmailAsync(googleUser.Email);
+ 
+        if (user == null)
+        {
+            // Tự động tạo account mới cho Reader khi lần đầu Google login
+            var userName = await GenerateUniqueUserNameAsync(googleUser.Email);
+ 
+            user = new User
+            {
+                UserName    = userName,
+                Email       = googleUser.Email.ToLower().Trim(),
+                Password    = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+                // Password random — user này chỉ login bằng Google
+                // Nếu sau này muốn đổi sang password thì dùng "Forgot Password"
+                FullName    = googleUser.Name,
+                Avatar      = googleUser.Picture,
+                Role        = "Reader",
+                IsActive    = true,
+                LastLoginAt = DateTime.UtcNow,
+            };
+ 
+            await _userRepo.CreateAsync(user);
+        }
+        else
+        {
+            // Account đã tồn tại → kiểm tra role
+            // Không cho staff (Admin/Contributor) login Google ở client portal
+            if (user.Role is not "Reader")
+                throw new ResponseErrorObject(
+                    "Staff accounts must use email and password to login.",
+                    StatusCodes.Status403Forbidden);
+ 
+            if (!user.IsActive)
+                throw new ResponseErrorObject(
+                    "Account is disabled.", StatusCodes.Status403Forbidden);
+ 
+            // Sync avatar nếu Google cập nhật ảnh mới
+            if (googleUser.Picture != null && user.Avatar != googleUser.Picture)
+            {
+                user.Avatar      = googleUser.Picture;
+                user.LastLoginAt = DateTime.UtcNow;
+                await _userRepo.UpdateAsync(user);
+            }
+            else
+            {
+                user.LastLoginAt = DateTime.UtcNow;
+                await _userRepo.UpdateAsync(user);
+            }
+        }
+ 
+        return await IssueTokensAsync(user, ipAddress, userAgent);
+    }
+ 
+    // ── CREATE STAFF (SuperAdmin only) ───────────────────────────────────────
+ 
+    public async Task<UserAuthInfo> CreateStaffAsync(CreateStaffInput input)
+    {
+        // Validate role — không cho tạo SuperAdmin qua API
+        if (input.Role is not ("Contributor" or "Admin"))
+            throw new ResponseErrorObject(
+                "Role must be 'Contributor' or 'Admin'.",
+                StatusCodes.Status400BadRequest);
+ 
+        if (await _authRepo.EmailExistsAsync(input.Email))
+            throw new ResponseErrorObject(
+                "Email is already in use.", StatusCodes.Status409Conflict);
+ 
+        if (await _authRepo.UserNameExistsAsync(input.UserName))
+            throw new ResponseErrorObject(
+                "Username is already taken.", StatusCodes.Status409Conflict);
+ 
+        var user = new User
+        {
+            UserName = input.UserName.Trim(),
+            Email    = input.Email.ToLower().Trim(),
+            Password = BCrypt.Net.BCrypt.HashPassword(input.Password),
+            FullName = input.FullName?.Trim(),
+            Role     = input.Role,
+            IsActive = true,
+        };
+ 
+        await _userRepo.CreateAsync(user);
+ 
+        return ToAuthInfo(user);
+    }
+ 
+    // ── REFRESH TOKEN ─────────────────────────────────────────────────────────
+ 
+    public async Task<AuthResult> RefreshTokenAsync(
+        RefreshTokenInput input, string? ipAddress, string? userAgent)
+    {
+        var existing = await _authRepo.GetByTokenValueAsync(input.RefreshToken)
+            ?? throw new ResponseErrorObject(
+                "Invalid refresh token.", StatusCodes.Status401Unauthorized);
+ 
+        if (existing.IsRevoked)
+            throw new ResponseErrorObject(
+                "Refresh token has been revoked.", StatusCodes.Status401Unauthorized);
+ 
+        if (existing.ExpiresAt <= DateTime.UtcNow)
+            throw new ResponseErrorObject(
+                "Refresh token has expired. Please login again.",
+                StatusCodes.Status401Unauthorized);
+ 
+        if (!existing.User.IsActive)
+            throw new ResponseErrorObject(
+                "Account is disabled.", StatusCodes.Status403Forbidden);
+ 
+        return await IssueTokensAsync(existing.User, ipAddress, userAgent);
+    }
+ 
+    // ── LOGOUT ────────────────────────────────────────────────────────────────
+ 
+    public async Task LogoutAsync(Guid userId)
+    {
+        await _authRepo.RevokeAllUserTokensAsync(userId);
+    }
+ 
+    // ── CHANGE PASSWORD ───────────────────────────────────────────────────────
+ 
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordInput input)
+    {
+        var user = await _userRepo.GetByIdAsync(userId)
+            ?? throw new ResponseErrorObject(
+                "User not found.", StatusCodes.Status404NotFound);
+ 
+        if (!BCrypt.Net.BCrypt.Verify(input.CurrentPassword, user.Password))
+            throw new ResponseErrorObject(
+                "Current password is incorrect.", StatusCodes.Status400BadRequest);
+ 
+        user.Password = BCrypt.Net.BCrypt.HashPassword(input.NewPassword);
+        await _userRepo.UpdateAsync(user);
+ 
+        // Revoke tất cả refresh token → buộc login lại trên tất cả thiết bị
+        await _authRepo.RevokeAllUserTokensAsync(userId);
+    }
+ 
+    // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
+ 
+    // Revoke token cũ → tạo access token + refresh token mới
+    private async Task<AuthResult> IssueTokensAsync(
+        User user, string? ipAddress, string? userAgent)
+    {
+        // Revoke tất cả token cũ (1 user = 1 refresh token)
+        await _authRepo.RevokeAllUserTokensAsync(user.Id);
+ 
+        var accessToken      = _jwtService.GenerateAccessToken(user);
+        var refreshTokenValue = _jwtService.GenerateRefreshToken();
+ 
+        var refreshExpiryDays = int.Parse(
+            _config["Jwt:RefreshTokenExpiryDays"] ?? "30");
+ 
+        var refreshToken = new RefreshToken
+        {
+            UserId    = user.Id,
+            Token     = refreshTokenValue,
+            ExpiresAt = DateTime.UtcNow.AddDays(refreshExpiryDays),
+        };
+ 
+        await _tokenRepo.CreateAsync(refreshToken);
+ 
+        var accessExpiryMinutes = int.Parse(
+            _config["Jwt:AccessTokenExpiryMinutes"] ?? "60");
+ 
+        return new AuthResult
+        {
+            AccessToken          = accessToken,
+            RefreshToken         = refreshTokenValue,
+            AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(accessExpiryMinutes),
+            User                 = ToAuthInfo(user),
+        };
+    }
+ 
+    // Generate username từ email prefix, thêm random suffix nếu đã tồn tại
+    private async Task<string> GenerateUniqueUserNameAsync(string email)
+    {
+        var baseUserName = email.Split('@')[0]
+            .Replace(".", "_")
+            .Replace("+", "_")
+            .ToLower();
+ 
+        baseUserName = Regex.Replace(baseUserName, @"[^a-z0-9_]", "");
+        baseUserName = baseUserName[..Math.Min(baseUserName.Length, 80)];
+ 
+        var candidate = baseUserName;
+        var attempts  = 0;
+ 
+        while (await _authRepo.UserNameExistsAsync(candidate))
+        {
+            attempts++;
+            candidate = $"{baseUserName}_{Random.Shared.Next(1000, 9999)}";
+ 
+            if (attempts > 10)
+                candidate = $"user_{Guid.NewGuid():N}"[..20];
+        }
+ 
+        return candidate;
+    }
+ 
+    private static UserAuthInfo ToAuthInfo(User user) => new()
+    {
+        Id       = user.Id,
+        UserName = user.UserName,
+        Email    = user.Email,
+        FullName = user.FullName,
+        Avatar   = user.Avatar,
+        Role     = user.Role,
+    };
 }
