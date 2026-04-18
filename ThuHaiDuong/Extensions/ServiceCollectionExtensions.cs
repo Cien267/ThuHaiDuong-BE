@@ -83,6 +83,15 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddReadingProgressServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBaseRepository<UserReadingProgress>, BaseRepository<UserReadingProgress>>();
+        services.AddScoped<IBaseRepository<ReadingHistory>, BaseRepository<ReadingHistory>>();
+        services.AddScoped<IReadingProgressService, ReadingProgressService>();
+        services.AddScoped<IReadingProgressRepository, ReadingProgressRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
@@ -94,7 +103,8 @@ public static class ServiceCollectionExtensions
             .AddStoryServices()
             .AddChapterServices()
             .AddAffiliateServices()
-            .AddAnalyticsServices();
+            .AddAnalyticsServices()
+            .AddReadingProgressServices();
 
         return services;
     }
