@@ -1,0 +1,591 @@
+================================================================
+SYSTEM CONTEXT — Story Reading Platform Backend
+================================================================
+Đây là tài liệu tổng hợp đầy đủ về hệ thống backend đã được thiết kế
+và triển khai. Sử dụng tài liệu này làm context cho mọi câu hỏi tiếp theo.
+================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. TỔNG QUAN DỰ ÁN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tên dự án : Nền tảng đọc truyện chữ (ngôn tình, kiếm hiệp, tiên hiệp...)
+Stack     : .NET 8 + EF Core + SQL Server
+Pattern   : Controller → Service → Repository
+Scale     : 1.000–50.000 DAU, read-heavy
+
+Có 2 frontend riêng biệt:
+  • Client site   : dành cho người đọc, auth optional
+  • Admin portal  : dành cho quản trị, bắt buộc auth
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. KIẾN TRÚC & PATTERN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 BASE ENTITY
+───────────────
+Tất cả entity kế thừa BaseEntity:
+  Id         UNIQUEIDENTIFIER  PK, default NewGuid()
+  CreatedAt  DATETIME2
+  UpdatedAt  DATETIME2         tự cập nhật qua SaveChanges override
+  IsDeleted  BIT               soft delete, default false
+
+2.2 BASE REPOSITORY
+───────────────────
+IBaseRepository<TEntity> đã có sẵn các method:
+  GetAllAsync(expression)
+  GetAsync(expression)
+  GetByIdAsync(id)
+  GetByIdAsync(expression)
+  CreateAsync(entity)
+  CreateAsync(IEnumerable)
+  DeleteAsync(id)              soft delete
+  DeleteAsync(expression)
+  UpdateAsync(entity)
+  UpdateAsync(IEnumerable)
+  CountAsync(expression)
+  BuildQueryable(includes, expression)
+  ApplySorting(query, sortBy, sortDescending)
+
+2.3 ERROR HANDLING
+──────────────────
+Dùng custom exception class:
+  throw new ResponseErrorObject("message", StatusCodes.Status404NotFound);
+  throw new ResponseErrorObject("message", StatusCodes.Status409Conflict);
+
+ResponseErrorObject có:
+  string Message
+  int StatusCode
+  Dictionary<string, string[]>? Errors
+
+Middleware ExceptionHandlingMiddleware bắt toàn bộ exception và trả về:
+  { message, statusCode, errors }
+
+Model validation fail (400) cũng cùng format nhờ InvalidModelStateResponseFactory.
+Production ẩn stack trace, Development trả đầy đủ.
+
+2.4 DTO PATTERN
+───────────────
+Mỗi entity có các class:
+  XxxQuery.cs         → filter + phân trang cho danh sách
+  CreateXxxInput.cs   → tạo mới
+  UpdateXxxInput.cs   → cập nhật
+  XxxResult.cs        → response đầy đủ (admin)
+  XxxSummary.cs       → response gọn (client)
+
+Result class dùng Expression<Func<Entity, Result>> FromEntity để .Select() trong LINQ.
+
+2.5 PHÂN QUYỀN ROLE
+────────────────────
+  Reader       → người đọc (đăng ký tự do hoặc Google OAuth)
+  Contributor  → được tạo story/chapter (SuperAdmin tạo thủ công)
+  Admin        → quản trị nội dung (SuperAdmin tạo thủ công)
+  SuperAdmin   → toàn quyền, tạo Admin/Contributor, approve story
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. DATABASE SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BẢNG: users
+  UserName, Password (BCrypt), FullName, Email (unique), Avatar
+  PhoneNumber, Role, IsActive, LastLoginAt
+
+BẢNG: refresh_tokens
+  UserId FK, Token (unique), ExpiresAt, IsRevoked, IpAddress, UserAgent
+
+BẢNG: authors
+  Name, Slug (unique), PenName, Country ("CN"|"VN"|"KR"...), Description, AvatarUrl
+
+BẢNG: categories  (hỗ trợ cha/con qua ParentId self-ref)
+  Name, Slug (unique), Description, ParentId FK (nullable), SortOrder, IsActive
+
+BẢNG: tags
+  Name, Slug (unique)
+
+BẢNG: stories
+  Title, Slug (unique), AuthorId FK, AuthorName (cache), UploadedByUserId FK (nullable)
+  SourceUrl, Description, CoverImageUrl
+  Status     : "Draft"|"PendingReview"|"Approved"|"Rejected"|"Publishing"|"Completed"|"Paused"
+  StoryType  : "Serial"|"Completed"   ← đặc điểm nội dung, khác với Status
+  ReleaseSchedule: "Daily"|"Weekly"|"BiWeekly"|"Monthly"|null  ← chỉ khi StoryType=Serial
+  NextChapterAt: DATETIME2 nullable   ← countdown ra chương tiếp theo
+  ContentSource: "Manual"|"Crawled"|"UGC"
+  RejectionReason: NVARCHAR(1000) nullable
+  TotalChapters, TotalViews, AverageRating, RatingCount  ← denormalized, background job update
+  LastChapterAt: DATETIME2 nullable
+
+BẢNG: story_categories  (many-to-many)
+  PK: (StoryId, CategoryId)
+
+BẢNG: story_tags  (many-to-many)
+  PK: (StoryId, TagId)
+
+BẢNG: chapters
+  StoryId FK, ChapterNumber (unique per story), Title, Content (nvarchar max, HTML)
+  Status: "Draft"|"Published"|"Hidden"
+  IsVip: BIT  ← yêu cầu subscription
+  WordCount (tự tính khi create/update), ViewCount (denormalized)
+  PublishedAt: DATETIME2 nullable
+
+BẢNG: user_reading_progresses
+  UserId FK, StoryId FK, LastChapterId FK, LastChapterNumber, LastReadAt
+  UNIQUE: (UserId, StoryId)  ← chỉ 1 progress per user per story
+  Chỉ update khi ChapterNumber MỚI HƠN hiện tại (tránh mất progress khi đọc lại)
+
+BẢNG: reading_histories
+  UserId FK, ChapterId FK, StoryId FK (denormalized), ReadAt
+  UNIQUE: (UserId, ChapterId)  ← đọc lại → update ReadAt, không insert mới
+
+BẢNG: bookmarks
+  UserId FK, StoryId FK
+  UNIQUE: (UserId, StoryId)
+
+BẢNG: ratings
+  UserId FK, StoryId FK, Score (1-5, CHECK CONSTRAINT), Comment
+  UNIQUE: (UserId, StoryId)  ← mỗi user chỉ rate 1 lần, KHÔNG cho update
+
+BẢNG: comments
+  UserId FK (nullable = anonymous), StoryId FK
+  ChapterId FK (nullable = comment trang truyện, có giá trị = comment trang chapter)
+  ParentCommentId FK self-ref (nullable = root, có giá trị = reply, chỉ 1 cấp)
+  Content, LikeCount, IsHidden
+  GuestName (nullable), GuestEmail (nullable)  ← chỉ khi UserId = null
+
+BẢNG: subscriptions
+  UserId FK, PlanCode ("Basic"|"Premium"...), Status, StartDate, EndDate
+  Amount, PaymentProvider, TransactionId
+
+BẢNG: affiliate_links
+  Name, TargetUrl, TrackingCode (unique, dùng cho /go/{code})
+  Placement: "in-chapter"|"sidebar"|"popup"|"global"
+  Priority, IsActive, StartDate, EndDate
+
+BẢNG: affiliate_link_stories  (many-to-many)
+  PK: (AffiliateLinkId, StoryId)
+  Không có row nào → link là Global (hiển thị mọi nơi)
+
+BẢNG: affiliate_link_chapters  (many-to-many)
+  PK: (AffiliateLinkId, ChapterId)
+
+BẢNG: affiliate_clicks
+  AffiliateLinkId FK, UserId FK (nullable), ChapterId FK (nullable)
+  IpAddress, UserAgent, Referrer, ClickedAt
+  Chống spam: 1 IP + link = 1 click trong 1 giờ (check ở application layer)
+
+BẢNG: chapter_views
+  ChapterId FK, StoryId FK (denormalized), UserId FK (nullable)
+  SessionId (anonymous tracking), IpAddress, ViewedAt
+  Không dedup — ghi tất cả
+
+BẢNG: daily_story_stats
+  StoryId FK, StatDate (DATE), ViewCount, UniqueVisitors, NewBookmarks, NewRatings
+  UNIQUE: (StoryId, StatDate)
+  Background job aggregate lúc 00:05 UTC mỗi ngày
+
+KEY INDEXES:
+  IX_Story_Slug (unique), IX_Story_Status_LastChapterAt, IX_Story_Status_TotalViews
+  IX_Story_StoryType_Status_LastChapterAt, IX_Story_AuthorId_Status
+  IX_Chapter_StoryId_ChapterNumber (unique) ← hot path prev/next
+  IX_AffiliateLink_TrackingCode (unique) ← hot path /go/{code}
+  IX_ChapterView_ChapterId_ViewedAt, IX_ChapterView_StoryId_ViewedAt
+  IX_DailyStoryStat_StatDate_ViewCount
+  IX_ReadingHistory_UserId_ChapterId (unique)
+  IX_ReadingHistory_UserId_StoryId_ReadAt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. AUTHENTICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+JWT Bearer Authentication. AccessToken 60 phút, RefreshToken 30 ngày.
+1 user = 1 refresh token (login mới → revoke cũ → tạo mới).
+
+Endpoints:
+  POST /api/auth/register         → Reader tự đăng ký (email/password)
+  POST /api/auth/login            → Reader login — 403 nếu là Staff
+  POST /api/auth/google           → Reader login Google OAuth — 403 nếu là Staff
+  POST /api/auth/refresh          → Làm mới access token
+  POST /api/auth/logout           → Revoke refresh token [Auth]
+  PUT  /api/auth/change-password  → Đổi mật khẩu + revoke tất cả token [Auth]
+  GET  /api/auth/me               → Đọc từ JWT claims, không query DB [Auth]
+
+  POST  /api/admin/auth/login              → Staff login — 403 nếu là Reader [Public]
+  POST  /api/admin/auth/staff              → Tạo Contributor/Admin [SuperAdmin]
+  GET   /api/admin/auth/staff              → Danh sách staff [SuperAdmin]
+  PATCH /api/admin/auth/staff/{id}/toggle-active → Bật/tắt tài khoản [SuperAdmin]
+
+Google OAuth flow:
+  Frontend Google Sign-In → nhận idToken → POST /api/auth/google { idToken }
+  Backend verify với Google tokeninfo endpoint (không dùng SDK)
+  Tự động tạo Reader account nếu email chưa tồn tại
+  Staff email cố login Google → 403
+
+appsettings.json cần:
+  Jwt:SecretKey, Jwt:Issuer, Jwt:Audience
+  Jwt:AccessTokenExpiryMinutes (60), Jwt:RefreshTokenExpiryDays (30)
+  Google:ClientId
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. MODULES & API ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+──────────────────────────────────────────
+MODULE: CATEGORY & TAG
+──────────────────────────────────────────
+Category hỗ trợ cha/con (ParentId). Tag độc lập, linh hoạt hơn Category.
+Slug tự generate từ tên tiếng Việt qua SlugHelper (xử lý dấu).
+Không xóa nếu còn children hoặc còn story gắn.
+
+CLIENT:
+  GET /api/categories/tree         → Cây danh mục (chỉ IsActive=true)
+  GET /api/categories/{slug}       → 1 category theo slug
+  GET /api/tags?search=            → Tag list / autocomplete
+
+ADMIN:
+  GET/POST/PUT/DELETE /api/admin/categories
+  GET/POST/PUT/DELETE /api/admin/tags
+
+──────────────────────────────────────────
+MODULE: AUTHOR
+──────────────────────────────────────────
+Author là entity riêng (không chỉ là string trên Story).
+AuthorName trên Story là cache string, sync khi Author đổi tên bằng ExecuteUpdateAsync.
+Client chỉ thấy Author có ít nhất 1 truyện Publishing/Completed.
+
+CLIENT:
+  GET /api/authors?name=&country=  → Chỉ author có truyện published
+  GET /api/authors/{slug}          → Profile tác giả
+
+ADMIN:
+  GET/POST/PUT/DELETE /api/admin/authors
+
+──────────────────────────────────────────
+MODULE: STORY
+──────────────────────────────────────────
+FLOW TRẠNG THÁI:
+  Draft → PendingReview → Approved → Publishing → Completed
+                        ↘ Rejected → Draft (sửa lại & submit)
+                                               ↘ Paused (ẩn client)
+
+PHÂN QUYỀN:
+  Tạo story           : Contributor/Admin/SuperAdmin
+  Submit review       : Owner hoặc Admin+ (phải có ít nhất 1 chapter)
+  Approve/Reject      : SuperAdmin only
+  Publish/Pause/Complete : Admin/SuperAdmin
+  Xóa                 : Admin+ bất kỳ; Contributor chỉ xóa Draft/Rejected của mình
+
+Update chỉ được khi Status = Draft hoặc Rejected.
+RejectionReason tự clear khi submit lại.
+SyncCategories/Tags dùng remove-then-insert.
+
+CLIENT:
+  GET /api/stories?keyword=&categoryId=&tagId=&authorId=&country=&storyType=
+      Filter: keyword (Title+AuthorName), categoryId, tagId, authorId, country, storyType
+      Sort: LastChapterAt|TotalViews|AverageRating|Title|CreatedAt
+      Chỉ trả Publishing/Completed
+  GET /api/stories/{slug}           → Chi tiết + danh sách chapter Published
+
+PORTAL (Auth):
+  POST   /api/portal/stories               → Tạo (→ Draft)
+  PUT    /api/portal/stories/{id}          → Sửa (chỉ Draft/Rejected, owner/Admin+)
+  POST   /api/portal/stories/{id}/submit   → Submit review
+  DELETE /api/portal/stories/{id}          → Xóa mềm
+
+ADMIN:
+  GET /api/admin/stories?status=&contentSource=&uploadedByUserId=&...
+  GET /api/admin/stories/{id}
+  PUT /api/admin/stories/{id}/status       → Publishing|Completed|Paused
+
+SUPERADMIN:
+  GET /api/superadmin/stories/pending      → Danh sách PendingReview
+  PUT /api/superadmin/stories/{id}/review  → { isApproved, rejectionReason }
+
+──────────────────────────────────────────
+MODULE: CHAPTER
+──────────────────────────────────────────
+Content là HTML. WordCount tự tính khi create/update (strip HTML tags → đếm từ).
+ChapterNumber tự tăng (MAX+1) nếu không truyền, cho phép truyền thủ công.
+Prev/next dùng ChapterNumber ± 1, không dùng Id.
+Story phải ≥ Approved mới được thêm chapter (không thêm vào Draft/PendingReview/Rejected).
+Khi publish/unpublish/xóa chapter → tự động SyncStoryCounters (TotalChapters + LastChapterAt).
+IsVip = true → cần subscription để đọc (chưa implement check, chỉ đánh dấu).
+
+CLIENT:
+  GET /api/stories/{storyId}/chapters         → Danh sách chapter Published (không phân trang)
+  GET /api/chapters/{chapterId}               → Đọc theo Id (kèm prev/next)
+  GET /api/stories/{storyId}/chapters/{number}→ Đọc theo số thứ tự (SEO-friendly)
+
+PORTAL (Auth):
+  POST   /api/portal/chapters              → Tạo chapter
+  PUT    /api/portal/chapters/{id}         → Sửa nội dung
+  PATCH  /api/portal/chapters/{id}/status  → Draft|Published|Hidden
+  DELETE /api/portal/chapters/{id}         → Xóa mềm
+
+ADMIN:
+  GET /api/admin/chapters?storyId=&status=&isVip=
+  GET /api/admin/chapters/{id}
+
+──────────────────────────────────────────
+MODULE: READER FEATURES (Bookmark, Rating, Comment)
+──────────────────────────────────────────
+BOOKMARK:
+  Toggle (1 endpoint, tự detect thêm/xóa).
+  GET /api/bookmarks              → Tủ sách + LastReadChapter (từ UserReadingProgress)
+  GET /api/bookmarks/{storyId}    → Kiểm tra đã bookmark chưa
+  POST /api/bookmarks/{storyId}/toggle → Toggle
+
+RATING:
+  Mỗi user chỉ rate 1 lần, KHÔNG cho sửa.
+  Khi tạo/xóa → tự sync AverageRating + RatingCount trên Story.
+  RatingSummary trả về ScoreDistribution (key 1-5 luôn đủ, 0 nếu không có).
+  GET  /api/ratings/stories/{storyId}  → Summary + MyRating (nếu đã login) [Public]
+  POST /api/ratings                    → Tạo rating [Auth]
+  GET  /api/admin/ratings?storyId=     → Kiểm duyệt [Admin]
+  DELETE /api/admin/ratings/{id}       → Xóa vi phạm [Admin]
+
+COMMENT:
+  Anonymous (chưa login): bắt buộc GuestName, optional GuestEmail.
+  Hỗ trợ reply 1 cấp (ParentCommentId). Không reply của reply.
+  Load: root comments phân trang + toàn bộ replies của page đó trong 1 query.
+  Admin ẩn (toggle IsHidden) hoặc xóa mềm.
+  GET    /api/comments?storyId=&chapterId=&page=  → Public
+  POST   /api/comments                            → Tạo (Public, anonymous OK)
+  GET    /api/admin/comments?isHidden=&isGuest=   → Admin
+  PATCH  /api/admin/comments/{id}/toggle-hide     → Admin
+  DELETE /api/admin/comments/{id}                 → Admin
+
+──────────────────────────────────────────
+MODULE: AFFILIATE
+──────────────────────────────────────────
+Mỗi Placement (in-chapter|sidebar|popup|global) hiển thị 1 link ưu tiên nhất.
+Match priority: Chapter-specific(3) → Story-specific(2) → Global(1) → Không match(0).
+Tie-break bằng Priority field.
+
+Redirect /go/{code}:
+  1. Lookup link theo TrackingCode (unique index)
+  2. Kiểm tra spam: IP đã click link này trong 1 giờ?
+  3. Nếu không spam → ghi AffiliateClick
+  4. 302 Redirect đến TargetUrl (không cache)
+
+TrackingCode KHÔNG cho sửa sau khi tạo.
+Soft delete link → click history giữ nguyên.
+
+CLIENT:
+  GET  /api/affiliate/display?storyId=&chapterId= → Links hiển thị (mỗi Placement 1 link)
+  GET  /go/{code}?chapterId=                      → Track + 302 redirect
+
+ADMIN:
+  GET/POST/PUT/DELETE /api/admin/affiliate/links
+  GET /api/admin/affiliate/reports/daily?linkId=&from=&to=  → Click theo ngày
+  GET /api/admin/affiliate/reports/links?from=&to=          → Xếp hạng link
+  GET /api/admin/affiliate/reports/clicks?linkId=&storyId=  → Raw click log
+
+──────────────────────────────────────────
+MODULE: ANALYTICS
+──────────────────────────────────────────
+Track view: ghi ngay khi user mở chapter (Q1:A), không dedup (Q3:C).
+Track dùng fire-and-forget (Task.Run) để không block response client.
+SessionId (từ localStorage) dùng cho anonymous tracking.
+
+Background job DailyAggregationJob:
+  Chạy lúc 00:05 UTC mỗi ngày (IHostedService, tự tính delay).
+  Aggregate chapter_views → upsert DailyStoryStats cho ngày hôm qua.
+  Idempotent: có thể trigger lại cho cùng ngày.
+
+Top stories strategy:
+  Period "all"          → TotalViews denormalized trên Stories (nhanh nhất)
+  Period today/week/month → GROUP BY DailyStoryStats (không scan raw views)
+
+CLIENT:
+  POST /api/analytics/views              → Track chapter view (SessionId, StoryId, ChapterId)
+  GET  /api/analytics/stories/top?period=today|week|month|all
+
+ADMIN:
+  GET  /api/admin/analytics/overview           → Widget cards (views, users, comments...)
+  GET  /api/admin/analytics/traffic?from=&to=  → Chart traffic theo ngày
+  GET  /api/admin/analytics/stories/top        → Bảng truyện hot
+  GET  /api/admin/analytics/chapters/top       → Bảng chapter hot
+  GET  /api/admin/analytics/stories/{id}       → Analytics 1 story (daily 30 ngày + top chapters)
+  POST /api/admin/analytics/aggregate?date=    → Trigger job thủ công [SuperAdmin]
+
+──────────────────────────────────────────
+MODULE: READING PROGRESS
+──────────────────────────────────────────
+2 bảng tách biệt:
+  user_reading_progresses : 1 row per (User,Story) = chapter CUỐI đang đọc dở
+  reading_histories       : 1 row per (User,Chapter) = tất cả chapter đã đọc từng qua
+
+Khi user chuyển chapter → gọi PUT /api/reading-progress:
+  UpsertProgress: chỉ update nếu ChapterNumber > hiện tại (không mất progress khi đọc lại)
+  UpsertHistory: luôn update ReadAt (đọc lại chương cũ → cập nhật thời gian)
+
+ProgressPercent = ReadChapterCount / TotalPublishedChapters * 100 (computed ở DTO layer).
+GetReadChapterIds trả về HashSet<Guid> → frontend check O(1) per chapter.
+ClearHistory → xóa toàn bộ history + reset progress ("Đọc lại từ đầu").
+
+ENDPOINTS (tất cả cần Auth):
+  PUT    /api/reading-progress                          → Cập nhật khi đọc chapter
+  GET    /api/reading-progress/{storyId}                → Tiến độ + % hoàn thành
+  GET    /api/reading-history?storyId=&page=            → Lịch sử đọc
+  GET    /api/reading-history/{storyId}/chapters        → Set chapterId đã đọc
+  DELETE /api/reading-history/{storyId}                 → Xóa lịch sử + reset progress
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. CÁC QUY TẮC NGHIỆP VỤ QUAN TRỌNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SOFT DELETE
+  Mọi entity đều có IsDeleted. Query luôn thêm !IsDeleted.
+  Dùng Global Query Filter trong EF Core để tự động áp dụng.
+
+DENORMALIZED COUNTERS
+  stories: TotalChapters, TotalViews, AverageRating, RatingCount, LastChapterAt
+  chapters: ViewCount
+  Không COUNT(*) realtime. Update bằng ExecuteUpdateAsync khi cần immediate.
+  Background job update TotalViews/Stats định kỳ.
+
+SLUG GENERATION
+  SlugHelper.Generate(name): tiếng Việt → NormalizationForm.FormD → strip diacritics
+  → lowercase → replace space bằng "-" → dedup "-".
+  Dùng chung cho Category, Tag, Author, Story.
+  Slug không cho sửa sau khi đã publish (SEO).
+
+AUTHOR vs UPLOADED_BY
+  AuthorId    = tác giả sáng tác (nội dung)
+  UploadedByUserId = người đưa lên hệ thống (vận hành)
+
+STORETYPE vs STATUS
+  StoryType = đặc điểm nội dung (Serial/Completed) — do bản chất truyện quyết định
+  Status    = trạng thái vận hành (Draft→...→Completed) — admin kiểm soát
+  VD: Serial vẫn có thể Status=Paused khi dịch giả nghỉ
+
+CHAPTER NAVIGATION
+  Luôn dùng ChapterNumber để prev/next, không dùng Id.
+  WHERE StoryId=@id AND ChapterNumber=@current+1 (có index)
+
+SUBSCRIPTION CHECK
+  WHERE UserId=@id AND Status='Active' AND EndDate > GETUTCNOW()
+  IsVip trên chapter chỉ là flag — chưa có middleware check subscription trong code hiện tại
+
+COMMENT ANONYMOUS
+  UserId=null + GuestName (bắt buộc) + GuestEmail (optional)
+  DisplayName = UserName nếu login, GuestName ?? "Khách" nếu anonymous
+
+AFFILIATE GLOBAL vs SPECIFIC
+  Link không có row trong affiliate_link_stories VÀ affiliate_link_chapters
+  → là Global, hiển thị cho tất cả truyện/chapter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. SHARED UTILITIES & SERVICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SlugHelper.Generate(string)   → Application layer, dùng chung
+IJwtService                   → GenerateAccessToken, GenerateRefreshToken, ValidateToken
+IGoogleAuthService            → VerifyIdTokenAsync (verify với Google server, không SDK)
+DailyAggregationJob           → IHostedService, chạy 00:05 UTC
+BCrypt.Net.BCrypt             → HashPassword, Verify (package BCrypt.Net-Next)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. CẤU TRÚC FILE ĐÃ TẠO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entities/
+  BaseEntity.cs
+  User.cs
+  RefreshToken.cs
+  Author.cs
+  Category.cs
+  Tag.cs
+  Story.cs
+  StoryCategory_StoryTag.cs
+  Chapter.cs
+  UserReadingProgress_Bookmark.cs
+  ReadingHistory.cs
+  Rating_Comment.cs
+  Subscription.cs
+  Affiliate.cs              ← AffiliateLink, AffiliateLinkStory, AffiliateLinkChapter, AffiliateClick
+  Analytics.cs              ← ChapterView, DailyStoryStat
+  AppDbContext.cs
+
+Auth/
+  AuthDTOs.cs               ← LoginInput, RegisterInput, GoogleLoginInput, CreateStaffInput, AuthResult
+  AuthRepository.cs
+  JwtService.cs
+  GoogleAuthService.cs
+  AuthService.cs            ← ClientLoginAsync, AdminLoginAsync, GoogleLoginAsync, RegisterAsync...
+  AuthController.cs         ← /api/auth/* và /api/admin/auth/*
+  AuthProgramSetup.cs       ← snippet đăng ký DI + JWT config
+
+Category/
+  CategoryDTOs.cs, TagDTOs.cs
+  ICategoryRepository.cs, CategoryRepository.cs
+  ICategoryService.cs, CategoryService.cs, TagService.cs
+  CategoryController.cs, TagController.cs
+
+Author/
+  AuthorDTOs.cs
+  AuthorRepository.cs
+  AuthorService.cs
+  AuthorController.cs
+  SlugHelper.cs
+
+Story/
+  StoryDTOs.cs              ← StoryStatus, StoryType constants + DTOs
+  StoryRepository.cs
+  IStoryService.cs, StoryService.cs
+  StoryController.cs        ← 4 controllers: public/portal/admin/superadmin
+
+Chapter/
+  ChapterDTOs.cs            ← ChapterStatus constants + DTOs
+  ChapterRepository.cs
+  ChapterService.cs
+  ChapterController.cs
+
+ReaderFeatures/
+  ReaderFeatureDTOs.cs
+  ReaderFeatureRepositories.cs
+  ReaderFeatureServices.cs
+  ReaderFeatureControllers.cs
+
+Affiliate/
+  AffiliateDTOs.cs          ← AffiliatePlacement constants + DTOs
+  AffiliateRepository.cs
+  AffiliateService.cs
+  AffiliateController.cs
+
+Analytics/
+  AnalyticsDTOs.cs
+  AnalyticsRepository.cs
+  AnalyticsService.cs
+  AnalyticsController.cs
+  DailyAggregationJob.cs
+  ProgramRegistration.cs    ← toàn bộ DI registration + Reading Progress
+
+ReadingProgress/
+  ReadingProgressDTOs.cs
+  ReadingProgressRepository.cs
+  ReadingProgressService.cs
+  ReadingProgressController.cs
+
+Middleware/
+  ExceptionHandlingMiddleware.cs
+  ProgramSnippet.cs         ← InvalidModelStateResponseFactory + middleware order
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. NHỮNG GÌ CHƯA IMPLEMENT (TODO)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- EF Core Migration (chưa có file migration)
+- Subscription middleware: check IsVip chapter → user phải có sub active
+- Email notification khi story bị approve/reject
+- Forgot password / reset password flow
+- Chapter scheduled publish (NextChapterAt → auto publish)
+- User profile update (đổi avatar, fullname...)
+- Admin: ban user (không chỉ toggle IsActive)
+- Rate limiting cho /api/admin/auth/login (chống brute force)
+- Caching layer (Redis) cho hot paths: story detail, top stories
+- Global Query Filter EF Core cho IsDeleted (hiện đang filter thủ công)
+- Unit tests
+
+================================================================
+END OF CONTEXT
+================================================================
