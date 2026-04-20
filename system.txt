@@ -577,14 +577,9 @@ Middleware/
 - EF Core Migration (chưa có file migration)
 - Subscription middleware: check IsVip chapter → user phải có sub active
 - Email notification khi story bị approve/reject
-- Forgot password / reset password flow
-- Chapter scheduled publish (NextChapterAt → auto publish)
 - User profile update (đổi avatar, fullname...)
-- Admin: ban user (không chỉ toggle IsActive)
 - Rate limiting cho /api/admin/auth/login (chống brute force)
 - Caching layer (Redis) cho hot paths: story detail, top stories
-- Global Query Filter EF Core cho IsDeleted (hiện đang filter thủ công)
-- Unit tests
 
 ================================================================
 END OF CONTEXT
