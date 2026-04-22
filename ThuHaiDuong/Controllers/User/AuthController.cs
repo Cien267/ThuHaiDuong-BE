@@ -22,12 +22,6 @@ public class AuthController : ControllerBase
     private Guid CurrentUserId =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
  
-    private string? ClientIp =>
-        HttpContext.Connection.RemoteIpAddress?.ToString();
- 
-    private string? ClientUserAgent =>
-        Request.Headers.UserAgent.ToString();
- 
     /// <summary>
     /// Đăng ký tài khoản Reader mới bằng email và password.
     /// Response: access token + refresh token + thông tin user.
@@ -36,7 +30,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResult>> RegisterAsync(
         [FromBody] RegisterInput input)
     {
-        var result = await _authService.RegisterAsync(input, ClientIp, ClientUserAgent);
+        var result = await _authService.RegisterAsync(input);
         return Ok(result);
     }
  
@@ -48,7 +42,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResult>> LoginAsync(
         [FromBody] LoginInput input)
     {
-        var result = await _authService.ClientLoginAsync(input, ClientIp, ClientUserAgent);
+        var result = await _authService.ClientLoginAsync(input);
         return Ok(result);
     }
  
@@ -68,7 +62,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResult>> GoogleLoginAsync(
         [FromBody] GoogleLoginInput input)
     {
-        var result = await _authService.GoogleLoginAsync(input, ClientIp, ClientUserAgent);
+        var result = await _authService.GoogleLoginAsync(input);
         return Ok(result);
     }
  
@@ -86,7 +80,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResult>> RefreshAsync(
         [FromBody] RefreshTokenInput input)
     {
-        var result = await _authService.RefreshTokenAsync(input, ClientIp, ClientUserAgent);
+        var result = await _authService.RefreshTokenAsync(input);
         return Ok(result);
     }
  

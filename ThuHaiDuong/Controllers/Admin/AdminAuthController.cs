@@ -27,12 +27,6 @@ public class AdminAuthController : ControllerBase
         _userRepo    = userRepo;
     }
  
-    private string? ClientIp =>
-        HttpContext.Connection.RemoteIpAddress?.ToString();
- 
-    private string? ClientUserAgent =>
-        Request.Headers.UserAgent.ToString();
- 
     /// <summary>
     /// Đăng nhập admin portal — chỉ dành cho Staff (Contributor/Admin/SuperAdmin).
     /// Reader cố login qua đây → 403.
@@ -43,7 +37,7 @@ public class AdminAuthController : ControllerBase
     public async Task<ActionResult<AuthResult>> LoginAsync(
         [FromBody] LoginInput input)
     {
-        var result = await _authService.AdminLoginAsync(input, ClientIp, ClientUserAgent);
+        var result = await _authService.AdminLoginAsync(input);
         return Ok(result);
     }
  

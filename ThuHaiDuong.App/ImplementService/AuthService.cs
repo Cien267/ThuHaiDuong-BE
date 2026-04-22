@@ -37,8 +37,7 @@ public class AuthService : IAuthService
  
     // ── REGISTER (Reader only) ────────────────────────────────────────────────
  
-    public async Task<AuthResult> RegisterAsync(
-        RegisterInput input, string? ipAddress, string? userAgent)
+    public async Task<AuthResult> RegisterAsync(RegisterInput input)
     {
         if (await _authRepo.EmailExistsAsync(input.Email))
             throw new ResponseErrorObject(
@@ -60,13 +59,12 @@ public class AuthService : IAuthService
  
         await _userRepo.CreateAsync(user);
  
-        return await IssueTokensAsync(user, ipAddress, userAgent);
+        return await IssueTokensAsync(user);
     }
  
     // ── LOGIN CLIENT (Reader only) ────────────────────────────────────────────
  
-    public async Task<AuthResult> ClientLoginAsync(
-        LoginInput input, string? ipAddress, string? userAgent)
+    public async Task<AuthResult> ClientLoginAsync(LoginInput input)
     {
         var user = await _authRepo.GetByEmailAsync(input.Email)
             ?? throw new ResponseErrorObject(
@@ -90,13 +88,12 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
  
-        return await IssueTokensAsync(user, ipAddress, userAgent);
+        return await IssueTokensAsync(user);
     }
  
     // ── LOGIN ADMIN (Staff only) ──────────────────────────────────────────────
  
-    public async Task<AuthResult> AdminLoginAsync(
-        LoginInput input, string? ipAddress, string? userAgent)
+    public async Task<AuthResult> AdminLoginAsync(LoginInput input)
     {
         var user = await _authRepo.GetByEmailAsync(input.Email)
             ?? throw new ResponseErrorObject(
@@ -120,13 +117,12 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);
  
-        return await IssueTokensAsync(user, ipAddress, userAgent);
+        return await IssueTokensAsync(user);
     }
  
     // ── GOOGLE LOGIN (Reader only) ────────────────────────────────────────────
  
-    public async Task<AuthResult> GoogleLoginAsync(
-        GoogleLoginInput input, string? ipAddress, string? userAgent)
+    public async Task<AuthResult> GoogleLoginAsync(GoogleLoginInput input)
     {
         var googleUser = await _googleAuth.VerifyIdTokenAsync(input.IdToken);
  
@@ -180,7 +176,7 @@ public class AuthService : IAuthService
             }
         }
  
-        return await IssueTokensAsync(user, ipAddress, userAgent);
+        return await IssueTokensAsync(user);
     }
  
     // ── CREATE STAFF (SuperAdmin only) ───────────────────────────────────────
@@ -218,8 +214,7 @@ public class AuthService : IAuthService
  
     // ── REFRESH TOKEN ─────────────────────────────────────────────────────────
  
-    public async Task<AuthResult> RefreshTokenAsync(
-        RefreshTokenInput input, string? ipAddress, string? userAgent)
+    public async Task<AuthResult> RefreshTokenAsync(RefreshTokenInput input)
     {
         var existing = await _authRepo.GetByTokenValueAsync(input.RefreshToken)
             ?? throw new ResponseErrorObject(
@@ -238,7 +233,7 @@ public class AuthService : IAuthService
             throw new ResponseErrorObject(
                 "Account is disabled.", StatusCodes.Status403Forbidden);
  
-        return await IssueTokensAsync(existing.User, ipAddress, userAgent);
+        return await IssueTokensAsync(existing.User);
     }
  
     // ── LOGOUT ────────────────────────────────────────────────────────────────
@@ -270,8 +265,7 @@ public class AuthService : IAuthService
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
  
     // Revoke token cũ → tạo access token + refresh token mới
-    private async Task<AuthResult> IssueTokensAsync(
-        User user, string? ipAddress, string? userAgent)
+    private async Task<AuthResult> IssueTokensAsync(User user)
     {
         // Revoke tất cả token cũ (1 user = 1 refresh token)
         await _authRepo.RevokeAllUserTokensAsync(user.Id);
