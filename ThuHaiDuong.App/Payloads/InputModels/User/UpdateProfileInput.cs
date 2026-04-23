@@ -1,11 +1,12 @@
-
-using ThuHaiDuong.Application.Payloads.InputModels.Common;
+using System.ComponentModel.DataAnnotations;
 
 namespace ThuHaiDuong.Application.Payloads.InputModels.User;
 
-public class UserQuery : PaginationParams
+public class UpdateProfileInput
 {
+    [MaxLength(200)]
     public string? FullName { get; set; }
-    public string? Email { get; set; }
+ 
+    [MaxLength(20)]
     public string? PhoneNumber { get; set; }
 }

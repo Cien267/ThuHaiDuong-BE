@@ -13,18 +13,19 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IDbContext, AppDbContext>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddHttpClient();
+        services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
         return services;
     }
     
     public static IServiceCollection AddAuthServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<RefreshToken>, BaseRepository<RefreshToken>>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IBaseRepository<User>, BaseRepository<User>>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         return services;
     }
@@ -37,7 +38,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddCategoryServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<Category>, BaseRepository<Category>>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         return services;
@@ -45,7 +45,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddTagServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<Tag>, BaseRepository<Tag>>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<ITagRepository, TagRepository>();
         return services;
@@ -53,7 +52,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddAuthorServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<Author>, BaseRepository<Author>>();
         services.AddScoped<IAuthorService, AuthorService>();
         services.AddScoped<IAuthorRepository, AuthorRepository>();
         return services;
@@ -61,7 +59,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddStoryServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<Story>, BaseRepository<Story>>();
         services.AddScoped<IStoryService, StoryService>();
         services.AddScoped<IStoryRepository, StoryRepository>();
         return services;
@@ -69,7 +66,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddChapterServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<Chapter>, BaseRepository<Chapter>>();
         services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IChapterRepository, ChapterRepository>();
         return services;
@@ -77,8 +73,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddAffiliateServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<AffiliateClick>, BaseRepository<AffiliateClick>>();
-        services.AddScoped<IBaseRepository<AffiliateLink>, BaseRepository<AffiliateLink>>();
         services.AddScoped<IAffiliateService, AffiliateService>();
         services.AddScoped<IAffiliateRepository, AffiliateRepository>();
         return services;
@@ -93,8 +87,6 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddReadingProgressServices(this IServiceCollection services)
     {
-        services.AddScoped<IBaseRepository<UserReadingProgress>, BaseRepository<UserReadingProgress>>();
-        services.AddScoped<IBaseRepository<ReadingHistory>, BaseRepository<ReadingHistory>>();
         services.AddScoped<IReadingProgressService, ReadingProgressService>();
         services.AddScoped<IReadingProgressRepository, ReadingProgressRepository>();
         return services;

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Infrastructure.DataContext;
 using Hangfire;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Middlewares;
@@ -36,6 +37,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         return new BadRequestObjectResult(response);
     };
 });
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
+});
 
 var app = builder.Build();
 
@@ -70,6 +75,7 @@ else
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStaticFiles();
 
 var allowedIPs = builder.Configuration
     .GetSection("Hangfire:AllowedIPs")
