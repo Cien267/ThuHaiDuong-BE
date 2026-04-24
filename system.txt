@@ -578,7 +578,6 @@ Middleware/
 - Subscription middleware: check IsVip chapter → user phải có sub active
 - Email notification khi story bị approve/reject
 - Rate limiting cho /api/admin/auth/login (chống brute force)
-- Caching layer (Redis) cho hot paths: story detail, top stories
 
 ================================================================
 END OF CONTEXT

@@ -3,6 +3,7 @@ using ThuHaiDuong.Infrastructure.DataContext;
 using Hangfire;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using StackExchange.Redis;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Middlewares;
 using ThuHaiDuong.Extensions;
@@ -41,6 +42,11 @@ builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
 });
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(
+        builder.Configuration.GetConnectionString("Redis")
+        ?? throw new InvalidOperationException("Redis connection string is missing.")));
 
 var app = builder.Build();
 

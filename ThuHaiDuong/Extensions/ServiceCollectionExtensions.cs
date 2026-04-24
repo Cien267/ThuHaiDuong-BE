@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDbContext, AppDbContext>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<ICacheService, RedisCacheService>();
         services.AddHttpClient();
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
         return services;
@@ -39,6 +40,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCategoryServices(this IServiceCollection services)
     {
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<ICategoryService>(sp =>
+            new CachedCategoryService(
+                sp.GetRequiredService<CategoryService>(),
+                sp.GetRequiredService<ICacheService>()));
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         return services;
     }
@@ -60,6 +65,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddStoryServices(this IServiceCollection services)
     {
         services.AddScoped<IStoryService, StoryService>();
+        services.AddScoped<IStoryService>(sp =>
+            new CachedStoryService(
+                sp.GetRequiredService<StoryService>(),
+                sp.GetRequiredService<ICacheService>()));
         services.AddScoped<IStoryRepository, StoryRepository>();
         return services;
     }
@@ -81,6 +90,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAnalyticsServices(this IServiceCollection services)
     {
         services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<IAnalyticsService>(sp =>
+            new CachedAnalyticsService(
+                sp.GetRequiredService<AnalyticsService>(),
+                sp.GetRequiredService<ICacheService>()));
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         return services;
     }

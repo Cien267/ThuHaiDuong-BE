@@ -36,4 +36,10 @@
     <ProjectReference Include="..\ThuHaiDuong.Shared\ThuHaiDuong.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="StackExchange.Redis">
+      <HintPath>..\..\..\..\..\..\.nuget\packages\stackexchange.redis\2.12.14\lib\net8.0\StackExchange.Redis.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
