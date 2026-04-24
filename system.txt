@@ -28,7 +28,7 @@ Tất cả entity kế thừa BaseEntity:
   Id         UNIQUEIDENTIFIER  PK, default NewGuid()
   CreatedAt  DATETIME2
   UpdatedAt  DATETIME2         tự cập nhật qua SaveChanges override
-  IsDeleted  BIT               soft delete, default false
+  DeletedAt  DATETIME2         soft delete
 
 2.2 BASE REPOSITORY
 ───────────────────
@@ -434,7 +434,7 @@ ENDPOINTS (tất cả cần Auth):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 SOFT DELETE
-  Mọi entity đều có IsDeleted. Query luôn thêm !IsDeleted.
+  Mọi entity đều có DeletedAt. Query luôn thêm !DeletedAt.HasValue.
   Dùng Global Query Filter trong EF Core để tự động áp dụng.
 
 DENORMALIZED COUNTERS
@@ -507,7 +507,7 @@ Entities/
   AppDbContext.cs
 
 Auth/
-  AuthDTOs.cs               ← LoginInput, RegisterInput, GoogleLoginInput, CreateStaffInput, AuthResult
+  Payloads (InputModels, ResultModels)         ← LoginInput, RegisterInput, GoogleLoginInput, CreateStaffInput, AuthResult
   AuthRepository.cs
   JwtService.cs
   GoogleAuthService.cs
@@ -516,44 +516,44 @@ Auth/
   AuthProgramSetup.cs       ← snippet đăng ký DI + JWT config
 
 Category/
-  CategoryDTOs.cs, TagDTOs.cs
+  Payloads (InputModels, ResultModels)
   ICategoryRepository.cs, CategoryRepository.cs
   ICategoryService.cs, CategoryService.cs, TagService.cs
   CategoryController.cs, TagController.cs
 
 Author/
-  AuthorDTOs.cs
+  Payloads (InputModels, ResultModels)
   AuthorRepository.cs
   AuthorService.cs
   AuthorController.cs
   SlugHelper.cs
 
 Story/
-  StoryDTOs.cs              ← StoryStatus, StoryType constants + DTOs
+  Payloads (InputModels, ResultModels)              ← StoryStatus, StoryType constants + DTOs
   StoryRepository.cs
   IStoryService.cs, StoryService.cs
   StoryController.cs        ← 4 controllers: public/portal/admin/superadmin
 
 Chapter/
-  ChapterDTOs.cs            ← ChapterStatus constants + DTOs
+  Payloads (InputModels, ResultModels)            ← ChapterStatus constants + DTOs
   ChapterRepository.cs
   ChapterService.cs
   ChapterController.cs
 
 ReaderFeatures/
-  ReaderFeatureDTOs.cs
+  Payloads (InputModels, ResultModels)
   ReaderFeatureRepositories.cs
   ReaderFeatureServices.cs
   ReaderFeatureControllers.cs
 
 Affiliate/
-  AffiliateDTOs.cs          ← AffiliatePlacement constants + DTOs
+  Payloads (InputModels, ResultModels)          ← AffiliatePlacement constants + DTOs
   AffiliateRepository.cs
   AffiliateService.cs
   AffiliateController.cs
 
 Analytics/
-  AnalyticsDTOs.cs
+  Payloads (InputModels, ResultModels)
   AnalyticsRepository.cs
   AnalyticsService.cs
   AnalyticsController.cs
@@ -561,7 +561,7 @@ Analytics/
   ProgramRegistration.cs    ← toàn bộ DI registration + Reading Progress
 
 ReadingProgress/
-  ReadingProgressDTOs.cs
+  Payloads (InputModels, ResultModels)
   ReadingProgressRepository.cs
   ReadingProgressService.cs
   ReadingProgressController.cs
@@ -577,7 +577,6 @@ Middleware/
 - EF Core Migration (chưa có file migration)
 - Subscription middleware: check IsVip chapter → user phải có sub active
 - Email notification khi story bị approve/reject
-- User profile update (đổi avatar, fullname...)
 - Rate limiting cho /api/admin/auth/login (chống brute force)
 - Caching layer (Redis) cho hot paths: story detail, top stories
 
