@@ -65,6 +65,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<RateLimitMiddleware>(); 
 app.UseCors("AllowAll");
 
 // Configure the HTTP request pipeline.
