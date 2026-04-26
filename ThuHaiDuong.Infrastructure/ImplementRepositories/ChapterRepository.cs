@@ -19,7 +19,7 @@ public class ChapterRepository : IChapterRepository
     public async Task<int> GetMaxChapterNumberAsync(Guid storyId)
     {
         var max = await _context.Chapters
-            .Where(c => c.StoryId == storyId && !c.DeletedAt.HasValue)
+            .Where(c => c.StoryId == storyId && !c.IsDeleted)
             .MaxAsync(c => (int?)c.ChapterNumber);
  
         return max ?? 0;
@@ -31,7 +31,7 @@ public class ChapterRepository : IChapterRepository
         var query = _context.Chapters
             .Where(c => c.StoryId == storyId
                         && c.ChapterNumber == chapterNumber
-                        && !c.DeletedAt.HasValue);
+                        && !c.IsDeleted);
  
         if (excludeId.HasValue)
             query = query.Where(c => c.Id != excludeId.Value);
@@ -46,8 +46,8 @@ public class ChapterRepository : IChapterRepository
             .FirstOrDefaultAsync(c =>
                 c.Id == chapterId &&
                 c.Status == ChapterStatus.Published &&
-                !c.DeletedAt.HasValue &&
-                !c.Story.DeletedAt.HasValue &&
+                !c.IsDeleted &&
+                !c.Story.IsDeleted &&
                 (c.Story.Status == StoryStatus.Publishing ||
                  c.Story.Status == StoryStatus.Completed));
  
@@ -64,8 +64,8 @@ public class ChapterRepository : IChapterRepository
                 c.StoryId == storyId &&
                 c.ChapterNumber == chapterNumber &&
                 c.Status == ChapterStatus.Published &&
-                !c.DeletedAt.HasValue &&
-                !c.Story.DeletedAt.HasValue);
+                !c.IsDeleted &&
+                !c.Story.IsDeleted);
  
         if (chapter == null) return null;
         return chapter;
@@ -78,7 +78,7 @@ public class ChapterRepository : IChapterRepository
         var publishedChapters = await _context.Chapters
             .Where(c => c.StoryId == storyId
                         && c.Status == ChapterStatus.Published
-                        && !c.DeletedAt.HasValue)
+                        && !c.IsDeleted)
             .ToListAsync();
  
         var totalChapters  = publishedChapters.Count;
@@ -101,7 +101,7 @@ public class ChapterRepository : IChapterRepository
             .Where(c => c.StoryId == chapter.StoryId
                         && c.ChapterNumber < chapter.ChapterNumber
                         && c.Status == ChapterStatus.Published
-                        && !c.DeletedAt.HasValue)
+                        && !c.IsDeleted)
             .OrderByDescending(c => c.ChapterNumber)
             .FirstOrDefaultAsync();
     }
@@ -112,7 +112,7 @@ public class ChapterRepository : IChapterRepository
             .Where(c => c.StoryId == chapter.StoryId
                         && c.ChapterNumber > chapter.ChapterNumber
                         && c.Status == ChapterStatus.Published
-                        && !c.DeletedAt.HasValue)
+                        && !c.IsDeleted)
             .OrderBy(c => c.ChapterNumber)
             .FirstOrDefaultAsync();
     }

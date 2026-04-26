@@ -31,8 +31,8 @@ public class AuthorService : IAuthorService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["Stories"],
-            a => !a.DeletedAt.HasValue
-                 && a.Stories.Any(s => !s.DeletedAt.HasValue
+            a => !a.IsDeleted
+                 && a.Stories.Any(s => !s.IsDeleted
                     && (s.Status == "Publishing" || s.Status == "Completed"))
         );
  
@@ -55,7 +55,7 @@ public class AuthorService : IAuthorService
     {
         var query = _baseRepo.BuildQueryable(
             ["Stories"],
-            a => a.Slug == slug && !a.DeletedAt.HasValue
+            a => a.Slug == slug && !a.IsDeleted
         );
  
         return await query
@@ -70,7 +70,7 @@ public class AuthorService : IAuthorService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["Stories"],
-            a => !a.DeletedAt.HasValue
+            a => !a.IsDeleted
         );
  
         dbQuery = ApplyFilters(dbQuery, query);
@@ -92,7 +92,7 @@ public class AuthorService : IAuthorService
     {
         var query = _baseRepo.BuildQueryable(
             ["Stories"],
-            a => a.Id == id && !a.DeletedAt.HasValue
+            a => a.Id == id && !a.IsDeleted
         );
  
         return await query
@@ -188,7 +188,7 @@ public class AuthorService : IAuthorService
     private async Task SyncAuthorNameOnStoriesAsync(Guid authorId, string newName)
     {
         await _baseRepo
-            .BuildQueryable([], s => s.Id == authorId && !s.DeletedAt.HasValue)
+            .BuildQueryable([], s => s.Id == authorId && !s.IsDeleted)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Name, newName));
     }
 }

@@ -25,7 +25,7 @@ public class CategoryResult : DataResponseBase
             ParentName = c.Parent != null ? c.Parent.Name : null,
             SortOrder = c.SortOrder,
             IsActive = c.IsActive,
-            StoryCount = c.StoryCategories.Count(sc => !sc.Story.DeletedAt.HasValue),
+            StoryCount = c.StoryCategories.Count(sc => !sc.Story.IsDeleted),
             CreatedAt = c.CreatedAt,
             UpdatedAt = c.UpdatedAt,
         };

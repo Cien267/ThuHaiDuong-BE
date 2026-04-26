@@ -21,6 +21,6 @@ public class AuthorSummary : DataResponseBase
             PenName    = a.PenName,
             Country    = a.Country,
             AvatarUrl  = a.AvatarUrl,
-            StoryCount = a.Stories.Count(s => !s.DeletedAt.HasValue && (s.Status == "Publishing" || s.Status == "Completed")),
+            StoryCount = a.Stories.Count(s => !s.IsDeleted && (s.Status == "Publishing" || s.Status == "Completed")),
         };
 }

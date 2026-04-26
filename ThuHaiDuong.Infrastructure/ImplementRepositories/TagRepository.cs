@@ -17,7 +17,7 @@ public class TagRepository : ITagRepository
     public async Task<bool> SlugExistsAsync(string slug, Guid? excludeId = null)
     {
         var query = _context.Tags
-            .Where(t => t.Slug == slug && !t.DeletedAt.HasValue);
+            .Where(t => t.Slug == slug && !t.IsDeleted);
  
         if (excludeId.HasValue)
             query = query.Where(t => t.Id != excludeId.Value);
@@ -28,13 +28,13 @@ public class TagRepository : ITagRepository
     public async Task<List<Tag>> GetByIdsAsync(IEnumerable<Guid> ids)
     {
         return await _context.Tags
-            .Where(t => ids.Contains(t.Id) && !t.DeletedAt.HasValue)
+            .Where(t => ids.Contains(t.Id) && !t.IsDeleted)
             .ToListAsync();
     }
  
     public async Task<bool> HasStoriesAsync(Guid tagId)
     {
         return await _context.StoryTags
-            .AnyAsync(st => st.TagId == tagId && !st.Story.DeletedAt.HasValue);
+            .AnyAsync(st => st.TagId == tagId && !st.Story.IsDeleted);
     }
 }

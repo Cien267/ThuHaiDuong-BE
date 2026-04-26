@@ -18,7 +18,7 @@ public class AffiliateRepository : IAffiliateRepository
     public async Task<bool> TrackingCodeExistsAsync(string code, Guid? excludeId = null)
     {
         var query = _context.AffiliateLinks
-            .Where(l => l.TrackingCode == code && !l.DeletedAt.HasValue);
+            .Where(l => l.TrackingCode == code && !l.IsDeleted);
  
         if (excludeId.HasValue)
             query = query.Where(l => l.Id != excludeId.Value);
@@ -33,7 +33,7 @@ public class AffiliateRepository : IAffiliateRepository
             .FirstOrDefaultAsync(l =>
                 l.TrackingCode == trackingCode &&
                 l.IsActive &&
-                !l.DeletedAt.HasValue &&
+                !l.IsDeleted &&
                 (l.StartDate == null || l.StartDate <= DateTime.UtcNow) &&
                 (l.EndDate == null   || l.EndDate   >= DateTime.UtcNow));
     }

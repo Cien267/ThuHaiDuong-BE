@@ -435,7 +435,6 @@ ENDPOINTS (tất cả cần Auth):
 
 SOFT DELETE
   Mọi entity đều có DeletedAt. Query luôn thêm !DeletedAt.HasValue.
-  Dùng Global Query Filter trong EF Core để tự động áp dụng.
 
 DENORMALIZED COUNTERS
   stories: TotalChapters, TotalViews, AverageRating, RatingCount, LastChapterAt
@@ -577,7 +576,6 @@ Middleware/
 - EF Core Migration (chưa có file migration)
 - Subscription middleware: check IsVip chapter → user phải có sub active
 - Email notification khi story bị approve/reject
-- Rate limiting cho /api/admin/auth/login (chống brute force)
 
 ================================================================
 END OF CONTEXT

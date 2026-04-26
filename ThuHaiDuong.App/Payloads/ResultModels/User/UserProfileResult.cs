@@ -30,8 +30,8 @@ public class UserProfileResult : DataResponseBase
             Role        = u.Role,
             LastLoginAt = u.LastLoginAt,
             CreatedAt   = u.CreatedAt,
-            BookmarkCount = u.Bookmarks.Count(b => !b.DeletedAt.HasValue),
-            CommentCount  = u.Comments.Count(c => !c.DeletedAt.HasValue),
-            RatingCount   = u.Ratings.Count(r => !r.DeletedAt.HasValue),
+            BookmarkCount = u.Bookmarks.Count(b => !b.IsDeleted),
+            CommentCount  = u.Comments.Count(c => !c.IsDeleted),
+            RatingCount   = u.Ratings.Count(r => !r.IsDeleted),
         };
 }

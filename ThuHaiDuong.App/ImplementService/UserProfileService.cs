@@ -29,7 +29,7 @@ public class UserProfileService : IUserProfileService
     {
         var query = _userRepo.BuildQueryable(
             ["Bookmarks", "Comments", "Ratings"],
-            u => u.Id == userId && !u.DeletedAt.HasValue
+            u => u.Id == userId && !u.IsDeleted
         );
  
         return await query

@@ -37,7 +37,7 @@ public class ReadingProgressService : IReadingProgressService
     {
         // Validate story tồn tại và đang public
         var story = await _storyRepo.GetByIdAsync(input.StoryId);
-        if (story == null || story.DeletedAt.HasValue
+        if (story == null || story.IsDeleted
             || (story.Status != StoryStatus.Publishing
                 && story.Status != StoryStatus.Completed))
             throw new ResponseErrorObject(
@@ -45,7 +45,7 @@ public class ReadingProgressService : IReadingProgressService
  
         // Validate chapter tồn tại, Published, và thuộc đúng story
         var chapter = await _chapterRepo.GetByIdAsync(input.ChapterId);
-        if (chapter == null || chapter.DeletedAt.HasValue
+        if (chapter == null || chapter.IsDeleted
             || chapter.StoryId != input.StoryId
             || chapter.Status != ChapterStatus.Published)
             throw new ResponseErrorObject(
@@ -66,7 +66,7 @@ public class ReadingProgressService : IReadingProgressService
             p =>
                 p.UserId == userId &&
                 p.StoryId == storyId &&
-                !p.DeletedAt.HasValue);
+                !p.IsDeleted);
         var progress = await progressQuery.FirstOrDefaultAsync();
         
         if (progress == null) return null;
@@ -75,7 +75,7 @@ public class ReadingProgressService : IReadingProgressService
             h =>
                 h.UserId == userId &&
                 h.StoryId == storyId &&
-                !h.DeletedAt.HasValue);
+                !h.IsDeleted);
         var readCount = await readCountQuery.CountAsync();
         var totalPublished = progress.Story.TotalChapters;
         
@@ -97,7 +97,7 @@ public class ReadingProgressService : IReadingProgressService
         Guid userId, ReadingHistoryQuery query)
     {
         var dbQuery = _historyBaseRepo.BuildQueryable([],
-            h => h.UserId == userId && !h.DeletedAt.HasValue && !h.Story.DeletedAt.HasValue);
+            h => h.UserId == userId && !h.IsDeleted && !h.Story.IsDeleted);
         if (query.StoryId.HasValue)
             dbQuery = dbQuery.Where(h => h.StoryId == query.StoryId.Value);
         var total = await dbQuery.CountAsync();
@@ -123,7 +123,7 @@ public class ReadingProgressService : IReadingProgressService
         // Xóa mềm toàn bộ history của user với story này
         var query = _historyBaseRepo.BuildQueryable(
             [],
-            h => h.UserId == userId && h.StoryId == storyId && !h.DeletedAt.HasValue
+            h => h.UserId == userId && h.StoryId == storyId && !h.IsDeleted
         );
  
         var histories = await query.ToListAsync();

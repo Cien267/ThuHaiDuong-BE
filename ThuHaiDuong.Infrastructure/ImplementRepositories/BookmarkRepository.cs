@@ -22,7 +22,7 @@ public class BookmarkRepository : IBookmarkRepository
             .FirstOrDefaultAsync(b =>
                 b.UserId == userId &&
                 b.StoryId == storyId &&
-                !b.DeletedAt.HasValue);
+                !b.IsDeleted);
     }
  
     public async Task<bool> ExistsAsync(Guid userId, Guid storyId)
@@ -31,13 +31,13 @@ public class BookmarkRepository : IBookmarkRepository
             .AnyAsync(b =>
                 b.UserId == userId &&
                 b.StoryId == storyId &&
-                !b.DeletedAt.HasValue);
+                !b.IsDeleted);
     }
 
     public async Task<List<Bookmark>> GetUserBookmarksByIdAsync(Guid userId)
     {
         return await _context.Bookmarks
-            .Where(b => b.UserId == userId && !b.DeletedAt.HasValue && !b.Story.DeletedAt.HasValue)
+            .Where(b => b.UserId == userId && !b.IsDeleted && !b.Story.IsDeleted)
             .Include(b => b.Story)
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();

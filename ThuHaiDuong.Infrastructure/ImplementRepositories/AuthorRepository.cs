@@ -16,7 +16,7 @@ public class AuthorRepository : IAuthorRepository
     public async Task<bool> SlugExistsAsync(string slug, Guid? excludeId = null)
     {
         var query = _context.Authors
-            .Where(a => a.Slug == slug && !a.DeletedAt.HasValue);
+            .Where(a => a.Slug == slug && !a.IsDeleted);
  
         if (excludeId.HasValue)
             query = query.Where(a => a.Id != excludeId.Value);
@@ -27,6 +27,6 @@ public class AuthorRepository : IAuthorRepository
     public async Task<bool> HasStoriesAsync(Guid authorId)
     {
         return await _context.Stories
-            .AnyAsync(s => s.AuthorId == authorId && !s.DeletedAt.HasValue);
+            .AnyAsync(s => s.AuthorId == authorId && !s.IsDeleted);
     }
 }

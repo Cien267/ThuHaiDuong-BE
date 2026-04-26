@@ -37,7 +37,7 @@ public class AffiliateService : IAffiliateService
             ["AffiliateLinkStories", "AffiliateLinkChapters"],
             l =>
                 l.IsActive &&
-                !l.DeletedAt.HasValue &&
+                !l.IsDeleted &&
                 (l.StartDate == null || l.StartDate <= now) &&
                 (l.EndDate == null || l.EndDate >= now));
         var allCandidates = await candidatesQuery.ToListAsync();
@@ -113,7 +113,7 @@ public class AffiliateService : IAffiliateService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["AffiliateClicks", "AffiliateLinkStories.Story", "AffiliateLinkChapters.Chapter.Story"],
-            l => !l.DeletedAt.HasValue
+            l => !l.IsDeleted
         );
  
         if (!string.IsNullOrWhiteSpace(query.Name))
@@ -156,7 +156,7 @@ public class AffiliateService : IAffiliateService
     {
         var query = _baseRepo.BuildQueryable(
             ["AffiliateClicks", "AffiliateLinkStories.Story", "AffiliateLinkChapters.Chapter.Story"],
-            l => l.Id == id && !l.DeletedAt.HasValue
+            l => l.Id == id && !l.IsDeleted
         );
  
         return await query
@@ -279,7 +279,7 @@ public class AffiliateService : IAffiliateService
         var linkIds = stats.Select(s => s.AffiliateLinkId).ToList();
         
         var linksQuery = _baseRepo.BuildQueryable(new List<string>(),
-            l => linkIds.Contains(l.Id) && !l.DeletedAt.HasValue);
+            l => linkIds.Contains(l.Id) && !l.IsDeleted);
         
         var links = await linksQuery.ToDictionaryAsync(l => l.Id);
         return stats

@@ -64,14 +64,14 @@ public class AnalyticsRepository : IAnalyticsRepository
  
         // New bookmarks trong ngày theo story
         var bookmarkStats = await _context.Bookmarks
-            .Where(b => b.CreatedAt >= dayStart && b.CreatedAt <= dayEnd && !b.DeletedAt.HasValue)
+            .Where(b => b.CreatedAt >= dayStart && b.CreatedAt <= dayEnd && !b.IsDeleted)
             .GroupBy(b => b.StoryId)
             .Select(g => new { StoryId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.StoryId, x => x.Count);
  
         // New ratings trong ngày theo story
         var ratingStats = await _context.Ratings
-            .Where(r => r.CreatedAt >= dayStart && r.CreatedAt <= dayEnd && !r.DeletedAt.HasValue)
+            .Where(r => r.CreatedAt >= dayStart && r.CreatedAt <= dayEnd && !r.IsDeleted)
             .GroupBy(r => r.StoryId)
             .Select(g => new { StoryId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.StoryId, x => x.Count);

@@ -19,7 +19,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .FirstOrDefaultAsync(u =>
                 u.Email == email.ToLower().Trim() &&
-                !u.DeletedAt.HasValue);
+                !u.IsDeleted);
     }
  
     public async Task<User?> GetByUserNameAsync(string userName)
@@ -27,7 +27,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .FirstOrDefaultAsync(u =>
                 u.UserName == userName &&
-                !u.DeletedAt.HasValue);
+                !u.IsDeleted);
     }
  
     public async Task<bool> EmailExistsAsync(string email)
@@ -35,7 +35,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .AnyAsync(u =>
                 u.Email == email.ToLower().Trim() &&
-                !u.DeletedAt.HasValue);
+                !u.IsDeleted);
     }
  
     public async Task<bool> UserNameExistsAsync(string userName)
@@ -43,7 +43,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .AnyAsync(u =>
                 u.UserName == userName &&
-                !u.DeletedAt.HasValue);
+                !u.IsDeleted);
     }
  
     public async Task<RefreshToken?> GetActiveRefreshTokenAsync(Guid userId)
@@ -53,7 +53,7 @@ public class AuthRepository : IAuthRepository
                 t.UserId == userId &&
                 !t.IsRevoked &&
                 t.ExpiresAt > DateTime.UtcNow &&
-                !t.DeletedAt.HasValue);
+                !t.IsDeleted);
     }
  
     public async Task<RefreshToken?> GetByTokenValueAsync(string token)
@@ -62,7 +62,7 @@ public class AuthRepository : IAuthRepository
             .Include(t => t.User)
             .FirstOrDefaultAsync(t =>
                 t.Token == token &&
-                !t.DeletedAt.HasValue);
+                !t.IsDeleted);
     }
  
     public async Task RevokeAllUserTokensAsync(Guid userId)

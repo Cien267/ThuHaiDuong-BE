@@ -22,7 +22,7 @@ public class ReadingProgressRepository : IReadingProgressRepository
             .FirstOrDefaultAsync(p =>
                 p.UserId == userId &&
                 p.StoryId == storyId &&
-                !p.DeletedAt.HasValue);
+                !p.IsDeleted);
     }
  
     public async Task<ReadingProgressResult?> GetProgressDetailAsync(
@@ -34,7 +34,7 @@ public class ReadingProgressRepository : IReadingProgressRepository
             .FirstOrDefaultAsync(p =>
                 p.UserId == userId &&
                 p.StoryId == storyId &&
-                !p.DeletedAt.HasValue);
+                !p.IsDeleted);
  
         if (progress == null) return null;
  
@@ -43,7 +43,7 @@ public class ReadingProgressRepository : IReadingProgressRepository
             .CountAsync(h =>
                 h.UserId == userId &&
                 h.StoryId == storyId &&
-                !h.DeletedAt.HasValue);
+                !h.IsDeleted);
  
         // Tổng chapter published (denormalized — đọc trực tiếp, không COUNT)
         var totalPublished = progress.Story.TotalChapters;
@@ -101,7 +101,7 @@ public class ReadingProgressRepository : IReadingProgressRepository
             .FirstOrDefaultAsync(h =>
                 h.UserId == userId &&
                 h.ChapterId == chapterId &&
-                !h.DeletedAt.HasValue);
+                !h.IsDeleted);
  
         if (existing != null)
         {
@@ -130,7 +130,7 @@ public class ReadingProgressRepository : IReadingProgressRepository
             .Where(h =>
                 h.UserId == userId &&
                 h.StoryId == storyId &&
-                !h.DeletedAt.HasValue)
+                !h.IsDeleted)
             .Select(h => h.ChapterId)
             .ToListAsync();
  

@@ -44,7 +44,7 @@ public class StoryService : IStoryService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["Author", "StoryCategories.Category", "StoryTags.Tag"],
-            s => !s.DeletedAt.HasValue
+            s => !s.IsDeleted
                  && (s.Status == StoryStatus.Publishing || s.Status == StoryStatus.Completed)
         );
  
@@ -90,7 +90,7 @@ public class StoryService : IStoryService
             AuthorSlug      = story.Author.Slug,
             AuthorAvatarUrl = story.Author.AvatarUrl,
             Categories      = story.StoryCategories
-                .Where(sc => !sc.Category.DeletedAt.HasValue && sc.Category.IsActive)
+                .Where(sc => !sc.Category.IsDeleted && sc.Category.IsActive)
                 .Select(sc => new CategorySummaryItem
                 {
                     Id   = sc.CategoryId,
@@ -98,7 +98,7 @@ public class StoryService : IStoryService
                     Slug = sc.Category.Slug,
                 }).ToList(),
             Tags            = story.StoryTags
-                .Where(st => !st.Tag.DeletedAt.HasValue)
+                .Where(st => !st.Tag.IsDeleted)
                 .Select(st => new TagSummaryItem
                 {
                     Id   = st.TagId,
@@ -241,7 +241,7 @@ public class StoryService : IStoryService
         // Cần có ít nhất 1 chapter trước khi submit
         var hasChapter = await _baseRepo
             .BuildQueryable(["Chapters"], s => s.Id == id)
-            .AnyAsync(s => s.Chapters.Any(c => !c.DeletedAt.HasValue));
+            .AnyAsync(s => s.Chapters.Any(c => !c.IsDeleted));
  
         if (!hasChapter)
             throw new ResponseErrorObject(
@@ -314,7 +314,7 @@ public class StoryService : IStoryService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["Author", "UploadedByUser", "StoryCategories.Category", "StoryTags.Tag"],
-            s => !s.DeletedAt.HasValue
+            s => !s.IsDeleted
         );
  
         // Admin filters
@@ -347,7 +347,7 @@ public class StoryService : IStoryService
     {
         var query = _baseRepo.BuildQueryable(
             ["Author", "UploadedByUser", "StoryCategories.Category", "StoryTags.Tag"],
-            s => s.Id == id && !s.DeletedAt.HasValue
+            s => s.Id == id && !s.IsDeleted
         );
  
         return await query
@@ -456,7 +456,7 @@ public class StoryService : IStoryService
     private async Task ValidateAuthorExistsAsync(Guid authorId)
     {
         var author = await _authorRepo.GetByIdAsync(authorId);
-        if (author == null || author.DeletedAt.HasValue)
+        if (author == null || author.IsDeleted)
             throw new ResponseErrorObject("Author not found", StatusCodes.Status404NotFound);
     }
  
@@ -465,7 +465,7 @@ public class StoryService : IStoryService
         if (categoryIds.Count == 0) return;
  
         var existCount = await _categoryRepo
-            .BuildQueryable([], c => categoryIds.Contains(c.Id) && !c.DeletedAt.HasValue)
+            .BuildQueryable([], c => categoryIds.Contains(c.Id) && !c.IsDeleted)
             .CountAsync();
  
         if (existCount != categoryIds.Distinct().Count())
@@ -479,7 +479,7 @@ public class StoryService : IStoryService
         if (tagIds.Count == 0) return;
  
         var existCount = await _tagRepo
-            .BuildQueryable([], t => tagIds.Contains(t.Id) && !t.DeletedAt.HasValue)
+            .BuildQueryable([], t => tagIds.Contains(t.Id) && !t.IsDeleted)
             .CountAsync();
  
         if (existCount != tagIds.Distinct().Count())

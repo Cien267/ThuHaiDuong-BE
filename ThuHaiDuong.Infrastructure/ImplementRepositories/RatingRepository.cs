@@ -21,7 +21,7 @@ public class RatingRepository : IRatingRepository
             .FirstOrDefaultAsync(r =>
                 r.UserId == userId &&
                 r.StoryId == storyId &&
-                !r.DeletedAt.HasValue);
+                !r.IsDeleted);
     }
  
     public async Task<bool> UserHasRatedAsync(Guid userId, Guid storyId)
@@ -30,13 +30,13 @@ public class RatingRepository : IRatingRepository
             .AnyAsync(r =>
                 r.UserId == userId &&
                 r.StoryId == storyId &&
-                !r.DeletedAt.HasValue);
+                !r.IsDeleted);
     }
  
     public async Task<Dictionary<int, int>> GetScoreDistributionAsync(Guid storyId)
     {
         var distribution = await _context.Ratings
-            .Where(r => r.StoryId == storyId && !r.DeletedAt.HasValue)
+            .Where(r => r.StoryId == storyId && !r.IsDeleted)
             .GroupBy(r => r.Score)
             .Select(g => new { Score = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Score, x => x.Count);
@@ -54,7 +54,7 @@ public class RatingRepository : IRatingRepository
     public async Task SyncStoryRatingAsync(Guid storyId)
     {
         var ratings = await _context.Ratings
-            .Where(r => r.StoryId == storyId && !r.DeletedAt.HasValue)
+            .Where(r => r.StoryId == storyId && !r.IsDeleted)
             .ToListAsync();
  
         var count   = ratings.Count;

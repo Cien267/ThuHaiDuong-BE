@@ -34,7 +34,7 @@ public class CategoryService : ICategoryService
     {
         var query = _baseRepo.BuildQueryable(
             ["Children"],
-            c => !c.DeletedAt.HasValue && c.IsActive
+            c => !c.IsDeleted && c.IsActive
         );
  
         var all = await query
@@ -64,7 +64,7 @@ public class CategoryService : ICategoryService
     {
         var query = _baseRepo.BuildQueryable(
             ["Children"],
-            c => c.Slug == slug && !c.DeletedAt.HasValue && c.IsActive
+            c => c.Slug == slug && !c.IsDeleted && c.IsActive
         );
  
         var category = await query
@@ -81,7 +81,7 @@ public class CategoryService : ICategoryService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["Parent", "StoryCategories.Story"],
-            c => !c.DeletedAt.HasValue
+            c => !c.IsDeleted
         );
  
         if (!string.IsNullOrWhiteSpace(query.Name))
@@ -113,7 +113,7 @@ public class CategoryService : ICategoryService
     {
         var query = _baseRepo.BuildQueryable(
             ["Parent", "StoryCategories.Story"],
-            c => c.Id == id && !c.DeletedAt.HasValue
+            c => c.Id == id && !c.IsDeleted
         );
  
         return await query
@@ -134,7 +134,7 @@ public class CategoryService : ICategoryService
         if (input.ParentId.HasValue)
         {
             var parentExists = await _baseRepo.GetByIdAsync(input.ParentId.Value);
-            if (parentExists == null || parentExists.DeletedAt.HasValue)
+            if (parentExists == null || parentExists.IsDeleted)
                 throw new ResponseErrorObject("Không tìm thấy phân loại cha", StatusCodes.Status404NotFound);
         }
  
@@ -171,7 +171,7 @@ public class CategoryService : ICategoryService
         if (input.ParentId.HasValue)
         {
             var parentExists = await _baseRepo.GetByIdAsync(input.ParentId.Value);
-            if (parentExists == null || parentExists.DeletedAt.HasValue)
+            if (parentExists == null || parentExists.IsDeleted)
                 throw new ResponseErrorObject("Không tìm thấy phân loại cha", StatusCodes.Status404NotFound);
         }
  

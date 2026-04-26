@@ -24,8 +24,8 @@ public class AuthorResult : DataResponseBase
             Country            = a.Country,
             Description        = a.Description,
             AvatarUrl          = a.AvatarUrl,
-            StoryCount         = a.Stories.Count(s => !s.DeletedAt.HasValue),
-            PublishedStoryCount = a.Stories.Count(s => !s.DeletedAt.HasValue && (s.Status == "Publishing" || s.Status == "Completed")),
+            StoryCount         = a.Stories.Count(s => !s.IsDeleted),
+            PublishedStoryCount = a.Stories.Count(s => !s.IsDeleted && (s.Status == "Publishing" || s.Status == "Completed")),
             CreatedAt          = a.CreatedAt,
             UpdatedAt          = a.UpdatedAt,
         };

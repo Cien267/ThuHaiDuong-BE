@@ -22,7 +22,7 @@ public class StoryRepository : IStoryRepository
     public async Task<bool> SlugExistsAsync(string slug, Guid? excludeId = null)
     {
         var query = _context.Stories
-            .Where(s => s.Slug == slug && !s.DeletedAt.HasValue);
+            .Where(s => s.Slug == slug && !s.IsDeleted);
  
         if (excludeId.HasValue)
             query = query.Where(s => s.Id != excludeId.Value);
@@ -39,11 +39,11 @@ public class StoryRepository : IStoryRepository
             .Include(s => s.StoryTags)
                 .ThenInclude(st => st.Tag)
             .Include(s => s.Chapters
-                .Where(c => c.Status == "Published" && !c.DeletedAt.HasValue)
+                .Where(c => c.Status == "Published" && !c.IsDeleted)
                 .OrderBy(c => c.ChapterNumber))
             .FirstOrDefaultAsync(s =>
                 s.Slug == slug &&
-                !s.DeletedAt.HasValue &&
+                !s.IsDeleted &&
                 (s.Status == StoryStatus.Publishing || s.Status == StoryStatus.Completed));
  
         if (story == null) return null;
@@ -107,7 +107,7 @@ public class StoryRepository : IStoryRepository
             .CountAsync(c =>
                 c.StoryId == storyId &&
                 c.Status == "Published" &&
-                !c.DeletedAt.HasValue);
+                !c.IsDeleted);
  
         await _context.Stories
             .Where(s => s.Id == storyId)
