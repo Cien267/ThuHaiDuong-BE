@@ -20,4 +20,10 @@ public interface IUserProfileService
  
     // Xóa avatar — về trạng thái không có ảnh
     Task RemoveAvatarAsync(Guid userId);
+    
+    // ── Staff profile (Admin Portal) ──────────────────────────────────────────
+    // Không có reader stats — dùng cho /api/admin/profile
+    Task<StaffProfileResult> GetMyStaffProfileAsync(Guid userId);
+    Task<StaffProfileResult> UpdateStaffProfileAsync(Guid userId, UpdateProfileInput input);
+    Task<StaffProfileResult> UpdateStaffUsernameAsync(Guid userId, UpdateUsernameInput input);
 }

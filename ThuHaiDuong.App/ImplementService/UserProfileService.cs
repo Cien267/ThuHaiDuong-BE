@@ -108,6 +108,55 @@ public class UserProfileService : IUserProfileService
  
         await _fileStorage.DeleteAsync(oldAvatarUrl);
     }
+    
+    // ── STAFF PROFILE (Admin Portal) ─────────────────────────────────────────
+ 
+    public async Task<StaffProfileResult> GetMyStaffProfileAsync(Guid userId)
+    {
+        // Không cần include navigation (không có bookmark/comment stats)
+        var query = _userRepo.BuildQueryable(
+            [],
+            u => u.Id == userId
+        );
+ 
+        return await query
+                   .Select(StaffProfileResult.FromUser)
+                   .FirstOrDefaultAsync()
+               ?? throw new ResponseErrorObject(
+                   "User not found.", StatusCodes.Status404NotFound);
+    }
+ 
+    public async Task<StaffProfileResult> UpdateStaffProfileAsync(
+        Guid userId, UpdateProfileInput input)
+    {
+        var user = await GetUserOrThrowAsync(userId);
+ 
+        user.FullName    = input.FullName?.Trim();
+        user.PhoneNumber = input.PhoneNumber?.Trim();
+ 
+        await _userRepo.UpdateAsync(user);
+ 
+        return await GetMyStaffProfileAsync(userId);
+    }
+ 
+    public async Task<StaffProfileResult> UpdateStaffUsernameAsync(
+        Guid userId, UpdateUsernameInput input)
+    {
+        var user    = await GetUserOrThrowAsync(userId);
+        var newName = input.UserName.Trim();
+ 
+        if (user.UserName == newName)
+            return await GetMyStaffProfileAsync(userId);
+ 
+        if (await _authRepo.UserNameExistsAsync(newName))
+            throw new ResponseErrorObject(
+                "Username is already taken.", StatusCodes.Status409Conflict);
+ 
+        user.UserName = newName;
+        await _userRepo.UpdateAsync(user);
+ 
+        return await GetMyStaffProfileAsync(userId);
+    }
  
     // ── PRIVATE ───────────────────────────────────────────────────────────────
  
