@@ -81,7 +81,7 @@ public class AnalyticsService : IAnalyticsService
         {
             var storyQuery1 = _storyRepo.BuildQueryable([],
                 s =>
-                    !s.IsDeleted &&
+                    !s.DeletedAt.HasValue &&
                     (s.Status == StoryStatus.Publishing ||
                      s.Status == StoryStatus.Completed));
             return await storyQuery1
@@ -137,7 +137,7 @@ public class AnalyticsService : IAnalyticsService
         var storyQuery2 = _storyRepo.BuildQueryable(["StoryCategories", "StoryCategories.Category"],
             s =>
                 storyIds.Contains(s.Id) &&
-                !s.IsDeleted &&
+                !s.DeletedAt.HasValue &&
                 (s.Status == StoryStatus.Publishing ||
                  s.Status == StoryStatus.Completed));
         
@@ -183,27 +183,27 @@ public class AnalyticsService : IAnalyticsService
             .Distinct()
             .CountAsync();
 
-        var newUsersQuery = _userRepo.BuildQueryable([], u => u.CreatedAt >= from && u.CreatedAt <= to && !u.IsDeleted);
+        var newUsersQuery = _userRepo.BuildQueryable([], u => u.CreatedAt >= from && u.CreatedAt <= to && !u.DeletedAt.HasValue);
         var newUsers = await newUsersQuery.CountAsync();
         
-        var newCommentsQuery = _commentRepo.BuildQueryable([], c => c.CreatedAt >= from && c.CreatedAt <= to && !c.IsDeleted);
+        var newCommentsQuery = _commentRepo.BuildQueryable([], c => c.CreatedAt >= from && c.CreatedAt <= to && !c.DeletedAt.HasValue);
         var newComments = await newCommentsQuery.CountAsync();
 
         var newRatingsQuery =
-            _ratingRepo.BuildQueryable([], r => r.CreatedAt >= from && r.CreatedAt <= to && !r.IsDeleted);
+            _ratingRepo.BuildQueryable([], r => r.CreatedAt >= from && r.CreatedAt <= to && !r.DeletedAt.HasValue);
         var newRatings = await newRatingsQuery.CountAsync();
 
         var newBookmarksQuery =
-            _bookMarkRepo.BuildQueryable([], b => b.CreatedAt >= from && b.CreatedAt <= to && !b.IsDeleted);
+            _bookMarkRepo.BuildQueryable([], b => b.CreatedAt >= from && b.CreatedAt <= to && !b.DeletedAt.HasValue);
         var newBookmarks = await newBookmarksQuery.CountAsync();
 
-        var totalStoriesQuery = _storyRepo.BuildQueryable([], s => !s.IsDeleted && (s.Status == StoryStatus.Publishing || s.Status == StoryStatus.Completed));
+        var totalStoriesQuery = _storyRepo.BuildQueryable([], s => !s.DeletedAt.HasValue && (s.Status == StoryStatus.Publishing || s.Status == StoryStatus.Completed));
         var totalStories = await totalStoriesQuery.CountAsync();
         
-        var totalChaptersQuery = _chapterRepo.BuildQueryable([], c => !c.IsDeleted && c.Status == ChapterStatus.Published);
+        var totalChaptersQuery = _chapterRepo.BuildQueryable([], c => !c.DeletedAt.HasValue && c.Status == ChapterStatus.Published);
         var totalChapters =  await totalChaptersQuery.CountAsync();
 
-        var totalUsersQuery = _userRepo.BuildQueryable([], u => !u.IsDeleted);
+        var totalUsersQuery = _userRepo.BuildQueryable([], u => !u.DeletedAt.HasValue);
         var totalUsers = await totalUsersQuery.CountAsync();
         
         return new SiteOverviewResult
@@ -238,20 +238,20 @@ public class AnalyticsService : IAnalyticsService
             })
             .ToListAsync();
         
-        var usersByDayQuery = _userRepo.BuildQueryable([], u => u.CreatedAt >= from && u.CreatedAt <= to && !u.IsDeleted);
+        var usersByDayQuery = _userRepo.BuildQueryable([], u => u.CreatedAt >= from && u.CreatedAt <= to && !u.DeletedAt.HasValue);
         var usersByDay = await usersByDayQuery
             .GroupBy(u => u.CreatedAt.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Date, x => x.Count);
         
-        var commentsByDayQuery = _commentRepo.BuildQueryable([], c => c.CreatedAt >= from && c.CreatedAt <= to && !c.IsDeleted);
+        var commentsByDayQuery = _commentRepo.BuildQueryable([], c => c.CreatedAt >= from && c.CreatedAt <= to && !c.DeletedAt.HasValue);
         var commentsByDay = await commentsByDayQuery
             .GroupBy(c => c.CreatedAt.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Date, x => x.Count);
 
         var ratingsByDayQuery =
-            _ratingRepo.BuildQueryable([], r => r.CreatedAt >= from && r.CreatedAt <= to && !r.IsDeleted);
+            _ratingRepo.BuildQueryable([], r => r.CreatedAt >= from && r.CreatedAt <= to && !r.DeletedAt.HasValue);
         var ratingsByDay = await ratingsByDayQuery
             .GroupBy(r => r.CreatedAt.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
@@ -280,9 +280,9 @@ public class AnalyticsService : IAnalyticsService
         limit = Math.Clamp(limit, 1, 50);
         var chapterQuery = _chapterRepo.BuildQueryable([],
             c =>
-                !c.IsDeleted &&
+                !c.DeletedAt.HasValue &&
                 c.Status == ChapterStatus.Published &&
-                !c.Story.IsDeleted);
+                !c.Story.DeletedAt.HasValue);
         
         return await chapterQuery
             .OrderByDescending(c => c.ViewCount)
@@ -302,15 +302,15 @@ public class AnalyticsService : IAnalyticsService
  
     public async Task<StoryAnalyticsResult> GetStoryAnalyticsAsync(Guid storyId)
     {
-        var storyQuery = _storyRepo.BuildQueryable([], s => s.Id == storyId && !s.IsDeleted);
+        var storyQuery = _storyRepo.BuildQueryable([], s => s.Id == storyId && !s.DeletedAt.HasValue);
         var story = await storyQuery.FirstOrDefaultAsync();
         if (story == null) throw new ResponseErrorObject("Story not found", StatusCodes.Status404NotFound);
         
-        var bookmarkCountQuery = _bookMarkRepo.BuildQueryable([], b => b.StoryId == storyId && !b.IsDeleted);
+        var bookmarkCountQuery = _bookMarkRepo.BuildQueryable([], b => b.StoryId == storyId && !b.DeletedAt.HasValue);
         var bookmarkCount = await bookmarkCountQuery.CountAsync();
 
         var commentCountQuery =
-            _commentRepo.BuildQueryable([], c => c.StoryId == storyId && !c.IsDeleted && !c.IsHidden);
+            _commentRepo.BuildQueryable([], c => c.StoryId == storyId && !c.DeletedAt.HasValue && !c.IsHidden);
         var commentCount = await commentCountQuery.CountAsync();
         
         var from = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-30));
@@ -330,7 +330,7 @@ public class AnalyticsService : IAnalyticsService
             c =>
                 c.StoryId == storyId &&
                 c.Status == ChapterStatus.Published &&
-                !c.IsDeleted);
+                !c.DeletedAt.HasValue);
         
         var topChapters = await topChaptersQuery
             .OrderByDescending(c => c.ViewCount)

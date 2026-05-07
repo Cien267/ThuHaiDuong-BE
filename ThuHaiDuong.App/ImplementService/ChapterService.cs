@@ -112,7 +112,7 @@ public class ChapterService : IChapterService
             [],
             c => c.StoryId == storyId
                  && c.Status == ChapterStatus.Published
-                 && !c.IsDeleted
+                 && !c.DeletedAt.HasValue
         );
  
         var total = await query.CountAsync();
@@ -131,7 +131,7 @@ public class ChapterService : IChapterService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             [],
-            c => c.StoryId == query.StoryId && !c.IsDeleted
+            c => c.StoryId == query.StoryId && !c.DeletedAt.HasValue
         );
  
         if (!string.IsNullOrWhiteSpace(query.Status))
@@ -313,7 +313,7 @@ public class ChapterService : IChapterService
     {
         var query = _baseRepo.BuildQueryable(
             ["Story"],
-            c => c.Id == id && !c.IsDeleted
+            c => c.Id == id && !c.DeletedAt.HasValue
         );
  
         return await query

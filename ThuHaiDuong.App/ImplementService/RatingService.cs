@@ -31,7 +31,7 @@ public class RatingService : IRatingService
     {
         // Validate story tồn tại và đang public
         var story = await _storyRepo.GetByIdAsync(input.StoryId);
-        if (story == null || story.IsDeleted
+        if (story == null || story.DeletedAt.HasValue
             || (story.Status != StoryStatus.Publishing
                 && story.Status != StoryStatus.Completed))
             throw new ResponseErrorObject("Story not found", StatusCodes.Status404NotFound);
@@ -106,7 +106,7 @@ public class RatingService : IRatingService
     {
         var query = _baseRepo.BuildQueryable(
             ["User"],
-            r => r.StoryId == storyId && !r.IsDeleted
+            r => r.StoryId == storyId && !r.DeletedAt.HasValue
         );
  
         var total = await query.CountAsync();

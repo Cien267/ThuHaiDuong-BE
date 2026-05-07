@@ -9,6 +9,7 @@ using ThuHaiDuong.Middlewares;
 using ThuHaiDuong.Extensions;
 using ThuHaiDuong.Filters;
 using ThuHaiDuong.Infrastructure.BackgroundJobs;
+using ThuHaiDuong.Infrastructure.Persistence;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,7 +50,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
         ?? throw new InvalidOperationException("Redis connection string is missing.")));
 
 var app = builder.Build();
-
+await DatabaseSeeder.SeedAsync(app.Services);
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

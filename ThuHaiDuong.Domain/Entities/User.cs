@@ -78,7 +78,6 @@ namespace ThuHaiDuong.Domain.Entities
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => e.UserName)

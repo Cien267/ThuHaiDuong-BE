@@ -16,7 +16,7 @@ public class CategoryRepository : ICategoryRepository
     public async Task<bool> SlugExistsAsync(string slug, Guid? excludeId = null)
     {
         var query = _context.Categories
-            .Where(c => c.Slug == slug && !c.IsDeleted);
+            .Where(c => c.Slug == slug && !c.DeletedAt.HasValue);
  
         if (excludeId.HasValue)
             query = query.Where(c => c.Id != excludeId.Value);
@@ -27,12 +27,12 @@ public class CategoryRepository : ICategoryRepository
     public async Task<bool> HasStoriesAsync(Guid categoryId)
     {
         return await _context.StoryCategories
-            .AnyAsync(sc => sc.CategoryId == categoryId && !sc.Story.IsDeleted);
+            .AnyAsync(sc => sc.CategoryId == categoryId && !sc.Story.DeletedAt.HasValue);
     }
  
     public async Task<bool> HasChildrenAsync(Guid categoryId)
     {
         return await _context.Categories
-            .AnyAsync(c => c.ParentId == categoryId && !c.IsDeleted);
+            .AnyAsync(c => c.ParentId == categoryId && !c.DeletedAt.HasValue);
     }
 }

@@ -29,7 +29,7 @@ public class TagService : ITagService
  
     public async Task<List<TagSummary>> GetAllAsync(string? search = null)
     {
-        var query = _baseRepo.BuildQueryable([], t => !t.IsDeleted);
+        var query = _baseRepo.BuildQueryable([], t => !t.DeletedAt.HasValue);
  
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -49,7 +49,7 @@ public class TagService : ITagService
     {
         var dbQuery = _baseRepo.BuildQueryable(
             ["StoryTags.Story"],
-            t => !t.IsDeleted
+            t => !t.DeletedAt.HasValue
         );
  
         if (!string.IsNullOrWhiteSpace(query.Name))
@@ -75,7 +75,7 @@ public class TagService : ITagService
     {
         var query = _baseRepo.BuildQueryable(
             ["StoryTags.Story"],
-            t => t.Id == id && !t.IsDeleted
+            t => t.Id == id && !t.DeletedAt.HasValue
         );
  
         return await query

@@ -95,9 +95,7 @@ public class AuthService : IAuthService
  
     public async Task<AuthResult> AdminLoginAsync(LoginInput input)
     {
-        var user = await _authRepo.GetByEmailAsync(input.Email)
-            ?? throw new ResponseErrorObject(
-                "Invalid email or password.", StatusCodes.Status401Unauthorized);
+        var user = await _authRepo.GetByEmailAsync(input.Email) ?? throw new ResponseErrorObject("Invalid email or password.", StatusCodes.Status500InternalServerError);
  
         // Chặn Reader cố login vào admin portal
         if (user.Role == "Reader")
@@ -112,7 +110,7 @@ public class AuthService : IAuthService
  
         if (!BCrypt.Net.BCrypt.Verify(input.Password, user.Password))
             throw new ResponseErrorObject(
-                "Invalid email or password.", StatusCodes.Status401Unauthorized);
+                "Invalid email or password.", StatusCodes.Status500InternalServerError);
  
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepo.UpdateAsync(user);

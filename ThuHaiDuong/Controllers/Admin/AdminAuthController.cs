@@ -64,7 +64,7 @@ public class AdminAuthController : ControllerBase
  
         var query = _userRepo.BuildQueryable(
             [],
-            u => staffRoles.Contains(u.Role) && !u.IsDeleted
+            u => staffRoles.Contains(u.Role) && !u.DeletedAt.HasValue
         );
  
         var staff = await query

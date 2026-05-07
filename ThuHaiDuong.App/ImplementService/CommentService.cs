@@ -36,7 +36,7 @@ public class CommentService : ICommentService
                 c.ChapterId == query.ChapterId &&
                 c.ParentCommentId == null &&
                 !c.IsHidden &&
-                !c.IsDeleted
+                !c.DeletedAt.HasValue
         );
         
         var total = await rootQuery.CountAsync();
@@ -59,7 +59,7 @@ public class CommentService : ICommentService
                 c.ParentCommentId != null &&
                 rootIds.Contains(c.ParentCommentId.Value) &&
                 !c.IsHidden &&
-                !c.IsDeleted
+                !c.DeletedAt.HasValue
         );
         
         var replies = await repliesQuery.OrderBy(c => c.CreatedAt)
@@ -83,7 +83,7 @@ public class CommentService : ICommentService
     {
         // Validate story tồn tại và đang public
         var story = await _storyRepo.GetByIdAsync(input.StoryId);
-        if (story == null || story.IsDeleted
+        if (story == null || story.DeletedAt.HasValue
             || (story.Status != StoryStatus.Publishing
                 && story.Status != StoryStatus.Completed))
             throw new ResponseErrorObject("Story not found", StatusCodes.Status404NotFound);
@@ -147,7 +147,7 @@ public class CommentService : ICommentService
             c => c.StoryId == query.StoryId
                  && c.ChapterId == query.ChapterId
                  && c.ParentCommentId == null
-                 && !c.IsDeleted
+                 && !c.DeletedAt.HasValue
         );
  
         if (query.IsHidden.HasValue)

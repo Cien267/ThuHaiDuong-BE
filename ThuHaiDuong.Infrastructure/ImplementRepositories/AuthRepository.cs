@@ -16,10 +16,11 @@ public class AuthRepository : IAuthRepository
  
     public async Task<User?> GetByEmailAsync(string email)
     {
+        var normalized = email.ToLower().Trim();
         return await _context.Users
             .FirstOrDefaultAsync(u =>
-                u.Email == email.ToLower().Trim() &&
-                !u.IsDeleted);
+                u.Email == normalized &&
+                !u.DeletedAt.HasValue);
     }
  
     public async Task<User?> GetByUserNameAsync(string userName)
@@ -27,7 +28,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .FirstOrDefaultAsync(u =>
                 u.UserName == userName &&
-                !u.IsDeleted);
+                !u.DeletedAt.HasValue);
     }
  
     public async Task<bool> EmailExistsAsync(string email)
@@ -35,7 +36,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .AnyAsync(u =>
                 u.Email == email.ToLower().Trim() &&
-                !u.IsDeleted);
+                !u.DeletedAt.HasValue);
     }
  
     public async Task<bool> UserNameExistsAsync(string userName)
@@ -43,7 +44,7 @@ public class AuthRepository : IAuthRepository
         return await _context.Users
             .AnyAsync(u =>
                 u.UserName == userName &&
-                !u.IsDeleted);
+                !u.DeletedAt.HasValue);
     }
  
     public async Task<RefreshToken?> GetActiveRefreshTokenAsync(Guid userId)
@@ -53,7 +54,7 @@ public class AuthRepository : IAuthRepository
                 t.UserId == userId &&
                 !t.IsRevoked &&
                 t.ExpiresAt > DateTime.UtcNow &&
-                !t.IsDeleted);
+                !t.DeletedAt.HasValue);
     }
  
     public async Task<RefreshToken?> GetByTokenValueAsync(string token)
@@ -62,7 +63,7 @@ public class AuthRepository : IAuthRepository
             .Include(t => t.User)
             .FirstOrDefaultAsync(t =>
                 t.Token == token &&
-                !t.IsDeleted);
+                !t.DeletedAt.HasValue);
     }
  
     public async Task RevokeAllUserTokensAsync(Guid userId)
