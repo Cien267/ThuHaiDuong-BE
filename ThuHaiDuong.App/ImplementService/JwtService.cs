@@ -36,8 +36,8 @@ public class JwtService : IJwtService
         var expiresMinutes = int.Parse(_config["Jwt:AccessTokenExpiryMinutes"] ?? "60");
  
         var token = new JwtSecurityToken(
-            issuer:             _config["Jwt:Issuer"],
-            audience:           _config["Jwt:Audience"],
+            issuer:             _config["Jwt:ValidIssuer"],
+            audience:           _config["Jwt:ValidAudience"],
             claims:             claims,
             expires:            DateTime.UtcNow.AddMinutes(expiresMinutes),
             signingCredentials: credentials);

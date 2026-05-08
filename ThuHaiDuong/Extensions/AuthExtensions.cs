@@ -13,9 +13,9 @@ public static class AuthExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddIdentity<ApplicationUser, IdentityRole>()
+        /*services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders();*/
 
         var secretKey = configuration["JWT:SecretKey"]
                         ?? throw new InvalidOperationException("JWT:SecretKey is not configured");
