@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddCategoryServices(this IServiceCollection services)
     {
-        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<CategoryService>();
         services.AddScoped<ICategoryService>(sp =>
             new CachedCategoryService(
                 sp.GetRequiredService<CategoryService>(),
@@ -64,7 +64,7 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddStoryServices(this IServiceCollection services)
     {
-        services.AddScoped<IStoryService, StoryService>();
+        services.AddScoped<StoryService>();
         services.AddScoped<IStoryService>(sp =>
             new CachedStoryService(
                 sp.GetRequiredService<StoryService>(),
@@ -89,7 +89,7 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddAnalyticsServices(this IServiceCollection services)
     {
-        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<AnalyticsService>();
         services.AddScoped<IAnalyticsService>(sp =>
             new CachedAnalyticsService(
                 sp.GetRequiredService<AnalyticsService>(),
