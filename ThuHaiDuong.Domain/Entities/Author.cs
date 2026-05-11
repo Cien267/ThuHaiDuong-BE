@@ -55,12 +55,12 @@ public static class AuthorModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             // URL /tac-gia/{slug}
             entity.HasIndex(e => e.Slug)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_Author_Slug");
  
             entity.HasIndex(e => e.Name)

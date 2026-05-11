@@ -77,12 +77,12 @@ public static class AffiliateLinkModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             // Hot path: redirect /go/{code}
             entity.HasIndex(e => e.TrackingCode)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_AffiliateLink_TrackingCode");
  
             entity.HasIndex(e => new { e.IsActive, e.Placement, e.Priority })

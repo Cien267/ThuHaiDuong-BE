@@ -72,7 +72,6 @@ public static class SubscriptionModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => new { e.UserId, e.Status, e.EndDate })

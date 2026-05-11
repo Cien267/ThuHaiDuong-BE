@@ -53,7 +53,6 @@ public static class ChapterViewModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => new { e.ChapterId, e.ViewedAt })

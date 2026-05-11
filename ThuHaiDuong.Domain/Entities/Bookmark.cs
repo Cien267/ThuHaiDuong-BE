@@ -33,7 +33,6 @@ public static class BookmarkModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => new { e.UserId, e.StoryId })

@@ -42,7 +42,6 @@ public static class ReadingHistoryModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             // Mỗi user + chapter chỉ có 1 record → UPSERT pattern

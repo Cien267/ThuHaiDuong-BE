@@ -53,7 +53,7 @@ public class AdminAffiliateLinkController : ControllerBase
         [FromBody] CreateAffiliateLinkInput input)
     {
         var result = await _affiliateService.CreateAsync(input);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = result.Id }, result);
+        return Ok(result);
     }
  
     /// <summary>

@@ -82,10 +82,12 @@ namespace ThuHaiDuong.Domain.Entities
  
             entity.HasIndex(e => e.UserName)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_User_UserName");
  
             entity.HasIndex(e => e.Email)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_User_Email");
  
             entity.HasIndex(e => e.Role)

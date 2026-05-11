@@ -51,7 +51,7 @@ public class AdminAuthController : ControllerBase
         [FromBody] CreateStaffInput input)
     {
         var result = await _authService.CreateStaffAsync(input);
-        return CreatedAtAction(nameof(GetStaffListAsync), result);
+        return Ok(result);
     }
  
     /// <summary>

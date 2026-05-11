@@ -33,11 +33,7 @@ public class ChapterPortalController : ControllerBase
         var result = await _chapterService.CreateAsync(
             input, CurrentUserId, CurrentUserRole);
  
-        return CreatedAtAction(
-            nameof(AdminChapterController.GetByIdAsync),
-            "AdminChapter",
-            new { id = result.Id },
-            result);
+        return Ok(result);
     }
  
     [HttpPut("{id:guid}")]

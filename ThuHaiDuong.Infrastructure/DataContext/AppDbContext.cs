@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using ThuHaiDuong.Domain.Entities;
 using System.Threading.Tasks;
 
@@ -37,10 +38,61 @@ namespace ThuHaiDuong.Infrastructure.DataContext
         {
             return Set<TEntity>();
         }
+        
+        private void UpdateTimestamps()
+        {
+            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedAt = DateTime.UtcNow;
+                        entry.Entity.UpdatedAt = DateTime.UtcNow;
+                        break;
+
+                    case EntityState.Modified:
+                        entry.Entity.UpdatedAt = DateTime.UtcNow;
+                        break;
+
+                    case EntityState.Deleted:
+                        entry.State            = EntityState.Modified; // SOFT-DELETE - do đổi State thành Modified chứ không phải Deleted
+                        entry.Entity.DeletedAt = DateTime.UtcNow;
+                        entry.Entity.UpdatedAt = DateTime.UtcNow;
+                        break;
+                }
+            }
+        }
+        
+        public override int SaveChanges()
+        {
+            UpdateTimestamps();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            UpdateTimestamps();
+            return base.SaveChangesAsync(cancellationToken);
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (!typeof(BaseEntity).IsAssignableFrom(entityType.ClrType)) continue;
+
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var property  = Expression.Property(parameter, nameof(BaseEntity.DeletedAt));
+                var isNull    = Expression.Equal(
+                    property,
+                    Expression.Constant(null, typeof(DateTime?)));
+                var lambda = Expression.Lambda(isNull, parameter);
+
+                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+            }
+            
             modelBuilder.BuildUserModel();
             modelBuilder.BuildAffiliateClickModel();
             modelBuilder.BuildAffiliateLinkModel();

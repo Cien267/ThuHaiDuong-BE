@@ -40,7 +40,7 @@ public class AdminAuthorController : ControllerBase
         [FromBody] CreateAuthorInput input)
     {
         var result = await _authorService.CreateAsync(input);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = result.Id }, result);
+        return Ok(result);
     }
  
     [HttpPut("{id:guid}")]

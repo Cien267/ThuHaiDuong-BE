@@ -155,7 +155,6 @@ public static class StoryModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasCheckConstraint("CK_Story_StoryType",
@@ -166,6 +165,7 @@ public static class StoryModelBuilderExtensions
  
             entity.HasIndex(e => e.Slug)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_Story_Slug");
  
             entity.HasIndex(e => new { e.Status, e.LastChapterAt })

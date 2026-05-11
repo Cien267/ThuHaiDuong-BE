@@ -37,6 +37,6 @@ public class RatingController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var result = await _ratingService.CreateAsync(userId, input);
-        return CreatedAtAction(nameof(GetSummaryAsync), new { storyId = result.StoryId }, result);
+        return Ok(result);
     }
 }

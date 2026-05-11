@@ -43,7 +43,6 @@ public static class RatingModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => new { e.UserId, e.StoryId })

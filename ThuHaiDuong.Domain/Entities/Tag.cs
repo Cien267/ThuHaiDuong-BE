@@ -37,11 +37,11 @@ public static class TagModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => e.Slug)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_Tag_Slug");
  
             entity.HasIndex(e => e.Name)

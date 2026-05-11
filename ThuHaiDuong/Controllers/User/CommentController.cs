@@ -35,7 +35,6 @@ public class CommentController : ControllerBase
         [FromBody] CreateCommentInput input)
     {
         var result = await _commentService.CreateAsync(input, CurrentUserId);
-        return CreatedAtAction(nameof(GetListAsync),
-            new { storyId = result.StoryId }, result);
+        return Ok(result);
     }
 }

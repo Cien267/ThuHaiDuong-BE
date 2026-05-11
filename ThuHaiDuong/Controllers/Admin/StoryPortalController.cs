@@ -31,11 +31,7 @@ public class StoryPortalController : ControllerBase
         [FromBody] CreateStoryInput input)
     {
         var result = await _storyService.CreateAsync(input, CurrentUserId);
-        return CreatedAtAction(
-            nameof(AdminStoryController.GetByIdAsync),
-            "AdminStory",
-            new { id = result.Id },
-            result);
+        return Ok(result);
     }
  
     [HttpPut("{id:guid}")]

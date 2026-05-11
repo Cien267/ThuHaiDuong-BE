@@ -40,7 +40,7 @@ public class AdminCategoryController : ControllerBase
         [FromBody] CreateCategoryInput input)
     {
         var result = await _categoryService.CreateAsync(input);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = result.Id }, result);
+        return Ok(result);
     }
  
     [HttpPut("{id:guid}")]

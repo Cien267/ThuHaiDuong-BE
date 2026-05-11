@@ -57,11 +57,11 @@ public static class CategoryModelBuilderExtensions
                 .HasColumnType("datetime2");
             
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => e.Slug)
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_Category_Slug");
  
             entity.HasIndex(e => e.ParentId)

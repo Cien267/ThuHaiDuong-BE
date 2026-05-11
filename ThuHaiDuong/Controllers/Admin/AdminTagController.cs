@@ -40,7 +40,7 @@ public class AdminTagController : ControllerBase
         [FromBody] CreateTagInput input)
     {
         var result = await _tagService.CreateAsync(input);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = result.Id }, result);
+        return Ok(result);
     }
  
     [HttpPut("{id:guid}")]

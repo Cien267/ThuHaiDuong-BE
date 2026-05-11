@@ -54,7 +54,6 @@ public static class AffiliateClickModelBuilderExtensions
                 .HasColumnType("datetime2");
  
             entity.Property(e => e.DeletedAt)
-                .IsRequired()
                 .HasColumnType("datetime2");
  
             entity.HasIndex(e => new { e.AffiliateLinkId, e.ClickedAt })
