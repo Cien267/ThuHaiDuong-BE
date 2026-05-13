@@ -179,7 +179,7 @@ public class AuthorService : IAuthorService
                 (a.PenName != null && a.PenName.ToLower().Contains(name)));
         }
  
-        if (!string.IsNullOrWhiteSpace(filter.Country))
+        if (!string.IsNullOrWhiteSpace(filter.Country) && filter.Country != "all")
             query = query.Where(a => a.Country == filter.Country.ToUpper());
  
         return query;
