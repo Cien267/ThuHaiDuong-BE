@@ -20,6 +20,11 @@ public class StoryDetail : DataResponseBase
     public decimal AverageRating { get; set; }
     public int RatingCount { get; set; }
     public DateTime? LastChapterAt { get; set; }
+    public string ContentSource { get; set; } = null!;
+    public string? SourceUrl { get; set; }
+    public string? RejectionReason { get; set; }
+    public Guid? UploadedByUserId { get; set; }
+    public string? UploadedByUserName { get; set; }
  
     // Author
     public Guid AuthorId { get; set; }

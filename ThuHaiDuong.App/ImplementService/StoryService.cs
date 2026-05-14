@@ -89,6 +89,11 @@ public class StoryService : IStoryService
             AuthorName      = story.AuthorName,
             AuthorSlug      = story.Author.Slug,
             AuthorAvatarUrl = story.Author.AvatarUrl,
+            ContentSource   = story.ContentSource,
+            SourceUrl       = story.SourceUrl,
+            RejectionReason = story.RejectionReason,
+            UploadedByUserId= story.UploadedByUserId,
+            UploadedByUserName = story.UploadedByUser?.UserName ?? null,
             Categories      = story.StoryCategories
                 .Where(sc => !sc.Category.DeletedAt.HasValue && sc.Category.IsActive)
                 .Select(sc => new CategorySummaryItem
