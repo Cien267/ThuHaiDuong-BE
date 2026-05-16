@@ -250,7 +250,7 @@ public class StoryService : IStoryService
  
         if (!hasChapter)
             throw new ResponseErrorObject(
-                "Story must have at least one chapter before submitting for review.",
+                "Truyện phải có ít nhất một chương để có thể được review.",
                 StatusCodes.Status422UnprocessableEntity);
  
         story.Status = StoryStatus.PendingReview;
@@ -351,7 +351,7 @@ public class StoryService : IStoryService
     public async Task<StoryResult> GetByIdAdminAsync(Guid id)
     {
         var query = _baseRepo.BuildQueryable(
-            ["Author", "UploadedByUser", "StoryCategories.Category", "StoryTags.Tag"],
+            ["Author", "UploadedByUser", "StoryCategories.Category", "StoryTags.Tag", "Chapters"],
             s => s.Id == id && !s.DeletedAt.HasValue
         );
  

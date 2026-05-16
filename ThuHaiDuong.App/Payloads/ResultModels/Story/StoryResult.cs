@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using ThuHaiDuong.Application.Payloads.ResultModels.Common;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Category;
+using ThuHaiDuong.Application.Payloads.ResultModels.User.Chapter;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Tag;
 
 namespace ThuHaiDuong.Application.Payloads.ResultModels.Story;
@@ -35,6 +36,7 @@ public class StoryResult : DataResponseBase
     // Taxonomy
     public List<CategorySummaryItem> Categories { get; set; } = [];
     public List<TagSummaryItem> Tags { get; set; } = [];
+    public List<ChapterSummaryItem> Chapters {get; set;} = [];
  
     public static Expression<Func<Domain.Entities.Story, StoryResult>> FromStory =>
         s => new StoryResult
@@ -75,6 +77,15 @@ public class StoryResult : DataResponseBase
                     Id   = st.TagId,
                     Name = st.Tag.Name,
                     Slug = st.Tag.Slug,
+                }).ToList(),
+            Chapters        = s.Chapters
+                .Select(c => new ChapterSummaryItem
+                {
+                    Id            = c.Id,
+                    ChapterNumber = c.ChapterNumber,
+                    Title         = c.Title,
+                    IsVip         = c.IsVip,
+                    PublishedAt   = c.PublishedAt,
                 }).ToList(),
         };
 }
