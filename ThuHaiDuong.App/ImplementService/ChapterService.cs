@@ -309,7 +309,7 @@ public class ChapterService : IChapterService
             ?? throw new ResponseErrorObject("Chapter not found", StatusCodes.Status404NotFound);
     }
  
-    private async Task<ChapterResult> GetByIdAdminAsync(Guid id)
+    public async Task<ChapterResult> GetByIdAdminAsync(Guid id)
     {
         var query = _baseRepo.BuildQueryable(
             ["Story"],
@@ -329,9 +329,7 @@ public class ChapterService : IChapterService
     {
         var blocked = new[]
         {
-            StoryStatus.Draft,
-            StoryStatus.PendingReview,
-            StoryStatus.Rejected,
+            StoryStatus.PendingReview
         };
  
         if (blocked.Contains(story.Status))

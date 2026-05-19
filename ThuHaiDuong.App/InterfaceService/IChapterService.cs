@@ -27,4 +27,5 @@ public interface IChapterService
     Task UpdateStatusAsync(Guid id, UpdateChapterStatusInput input, Guid requestUserId, string requestUserRole);
  
     Task DeleteAsync(Guid id, Guid requestUserId, string requestUserRole);
+    Task<ChapterResult> GetByIdAdminAsync(Guid id);
 }

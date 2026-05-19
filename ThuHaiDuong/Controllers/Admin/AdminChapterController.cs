@@ -32,7 +32,7 @@ public class AdminChapterController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ChapterReadResult>> GetByIdAsync(Guid id)
     {
-        var result = await _chapterService.GetForReadingAsync(id);
+        var result = await _chapterService.GetByIdAdminAsync(id);
         return Ok(result);
     }
 }
