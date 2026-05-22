@@ -10,6 +10,7 @@ public class CommentResult : DataResponseBase
     public Guid? ParentCommentId { get; set; }
     public string Content { get; set; } = null!;
     public int LikeCount { get; set; }
+    public bool IsHidden { get; set; }
  
     // Author info — một trong hai sẽ có giá trị
     public CommentAuthorInfo Author { get; set; } = null!;
@@ -27,6 +28,7 @@ public class CommentResult : DataResponseBase
             Content         = c.Content,
             LikeCount       = c.LikeCount,
             CreatedAt       = c.CreatedAt,
+            IsHidden        =  c.IsHidden,
             Author          = new CommentAuthorInfo
             {
                 UserId    = c.UserId,
