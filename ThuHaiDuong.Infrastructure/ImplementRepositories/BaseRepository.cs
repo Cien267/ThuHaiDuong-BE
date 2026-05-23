@@ -186,7 +186,7 @@ namespace ThuHaiDuong.Infrastructure.ImplementRepositories
 
         public async Task<TEntity> UpdateAsync(TEntity entity)
         {
-            /*_dbContext.Entry(entity).State = EntityState.Modified;*/
+            _dbContext.Entry(entity).State = EntityState.Modified;
             await _IDbContext.CommitChangeAsync();
             return entity;
         }

@@ -62,6 +62,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddCommentServices(this IServiceCollection services)
+    {
+        services.AddScoped<ICommentService, CommentService>();
+        services.AddScoped<ICommentRepository, CommentRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddStoryServices(this IServiceCollection services)
     {
         services.AddScoped<StoryService>();
@@ -118,7 +125,8 @@ public static class ServiceCollectionExtensions
             .AddChapterServices()
             .AddAffiliateServices()
             .AddAnalyticsServices()
-            .AddReadingProgressServices();
+            .AddReadingProgressServices()
+            .AddCommentServices();
 
         return services;
     }
