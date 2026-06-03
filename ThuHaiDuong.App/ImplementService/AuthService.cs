@@ -329,5 +329,6 @@ public class AuthService : IAuthService
         FullName = user.FullName,
         Avatar   = user.Avatar,
         Role     = user.Role,
+        IsActive = user.IsActive
     };
 }

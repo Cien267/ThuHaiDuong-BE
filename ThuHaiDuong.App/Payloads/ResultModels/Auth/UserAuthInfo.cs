@@ -8,4 +8,5 @@ public class UserAuthInfo
     public string? FullName { get; set; }
     public string? Avatar { get; set; }
     public string Role { get; set; } = null!;
+    public bool IsActive { get; set; }
 }

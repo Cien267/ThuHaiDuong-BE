@@ -78,6 +78,7 @@ public class AdminAuthController : ControllerBase
                 FullName = u.FullName,
                 Avatar   = u.Avatar,
                 Role     = u.Role,
+                IsActive = u.IsActive
             })
             .ToListAsync();
  
