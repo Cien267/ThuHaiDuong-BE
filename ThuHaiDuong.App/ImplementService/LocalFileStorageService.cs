@@ -39,7 +39,8 @@ public class LocalFileStorageService : IFileStorageService
                 StatusCodes.Status400BadRequest);
  
         // Tạo thư mục nếu chưa có
-        var uploadDir = Path.Combine(_env.WebRootPath, "uploads", folder);
+        var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+        var uploadDir = Path.Combine(webRoot, "uploads", folder);
         Directory.CreateDirectory(uploadDir);
  
         // Generate tên file unique — tránh trùng và tránh path traversal
@@ -76,7 +77,8 @@ public class LocalFileStorageService : IFileStorageService
             if (!relativePath.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
                 return Task.CompletedTask;
  
-            var filePath = Path.Combine(_env.WebRootPath, relativePath);
+            var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var filePath = Path.Combine(webRoot, relativePath);
  
             if (File.Exists(filePath))
                 File.Delete(filePath);
