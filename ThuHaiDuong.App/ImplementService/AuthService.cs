@@ -247,11 +247,11 @@ public class AuthService : IAuthService
     {
         var user = await _userRepo.GetByIdAsync(userId)
             ?? throw new ResponseErrorObject(
-                "User not found.", StatusCodes.Status404NotFound);
+                "Không tìm thấy người dùng.", StatusCodes.Status404NotFound);
  
         if (!BCrypt.Net.BCrypt.Verify(input.CurrentPassword, user.Password))
             throw new ResponseErrorObject(
-                "Current password is incorrect.", StatusCodes.Status400BadRequest);
+                "Mật khẩu hiện tại không chính xác.", StatusCodes.Status400BadRequest);
  
         user.Password = BCrypt.Net.BCrypt.HashPassword(input.NewPassword);
         await _userRepo.UpdateAsync(user);
