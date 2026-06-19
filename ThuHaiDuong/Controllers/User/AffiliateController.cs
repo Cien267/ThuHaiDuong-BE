@@ -19,7 +19,7 @@ public class AffiliateController : ControllerBase
         ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
         : null;
  
-    [HttpGet("/go/{code}")]
+    [HttpGet("api/go/{code}")]
     public async Task<IActionResult> RedirectAsync(
         string code,
         [FromQuery] Guid? chapterId = null)
