@@ -1,6 +1,5 @@
 using ThuHaiDuong.Application.ImplementService;
 using ThuHaiDuong.Application.InterfaceService;
-using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Domain.InterfaceRepositories;
 using ThuHaiDuong.Infrastructure.DataContext;
 using ThuHaiDuong.Infrastructure.ImplementRepositories;
@@ -112,6 +111,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddRatingServices(this IServiceCollection services)
+    {
+        services.AddScoped<IRatingService, RatingService>();
+        services.AddScoped<IRatingRepository, RatingRepository>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
@@ -126,7 +132,8 @@ public static class ServiceCollectionExtensions
             .AddAffiliateServices()
             .AddAnalyticsServices()
             .AddReadingProgressServices()
-            .AddCommentServices();
+            .AddCommentServices()
+            .AddRatingServices();
 
         return services;
     }
