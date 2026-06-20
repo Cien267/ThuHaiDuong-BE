@@ -14,10 +14,12 @@ namespace ThuHaiDuong.Controllers;
 public class StoryPortalController : ControllerBase
 {
     private readonly IStoryService _storyService;
+    private readonly IFileStorageService  _fileStorage;
  
-    public StoryPortalController(IStoryService storyService)
+    public StoryPortalController(IStoryService storyService, IFileStorageService   fileStorage)
     {
         _storyService = storyService;
+        _fileStorage = fileStorage;
     }
  
     private Guid CurrentUserId =>
@@ -41,6 +43,18 @@ public class StoryPortalController : ControllerBase
     {
         var result = await _storyService.UpdateAsync(id, input, CurrentUserId, CurrentUserRole);
         return Ok(result);
+    }
+    
+    /// <summary>
+    /// Upload ảnh bìa cho truyện.
+    /// Allowed: jpeg, png, webp. Max 5MB.
+    /// </summary>
+    [HttpPost("upload-cover")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult<CoverUploadResult>> UploadCoverAsync(IFormFile file)
+    {
+        var url = await _fileStorage.UploadAsync(file, "covers");
+        return Ok(new CoverUploadResult { CoverImageUrl = url });
     }
  
     [HttpPost("{id:guid}/submit")]
