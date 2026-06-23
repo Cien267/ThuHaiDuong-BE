@@ -7,6 +7,7 @@ public class StoryQuery : PaginationParams
     public string? Keyword { get; set; }
  
     public Guid? CategoryId { get; set; }
+    public string? CategorySlug { get; set; }
     public Guid? TagId { get; set; }
     public Guid? AuthorId { get; set; }
     public string? Country { get; set; }

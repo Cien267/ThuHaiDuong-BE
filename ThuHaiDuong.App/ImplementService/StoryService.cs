@@ -403,6 +403,10 @@ public class StoryService : IStoryService
         if (filter.CategoryId.HasValue)
             query = query.Where(s =>
                 s.StoryCategories.Any(sc => sc.CategoryId == filter.CategoryId.Value));
+
+        if (!string.IsNullOrWhiteSpace(filter.CategorySlug))
+            query = query.Where(s =>
+                s.StoryCategories.Any(sc => sc.Category.Slug == filter.CategorySlug));
  
         if (filter.TagId.HasValue)
             query = query.Where(s =>
