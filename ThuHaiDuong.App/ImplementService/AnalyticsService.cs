@@ -60,15 +60,10 @@ public class AnalyticsService : IAnalyticsService
             ViewedAt  = DateTime.UtcNow,
         };
  
-        // Fire-and-forget style: ghi view + tăng counter song song
-        // Không await để không block response trả về cho client
-        // Trong production nên dùng background queue (Channel<T> hoặc Hangfire)
-        _ = Task.Run(async () =>
-        {
-            await _analyticsRepo.RecordChapterViewAsync(view);
-            await _analyticsRepo.IncrementViewCountersAsync(
-                input.ChapterId, input.StoryId);
-        });
+        await _analyticsRepo.RecordChapterViewAsync(view);
+        await _analyticsRepo.IncrementViewCountersAsync(
+            input.ChapterId,
+            input.StoryId);
     }
  
     public async Task<List<StoryRankingItem>> GetTopStoriesAsync(StoryRankingQuery query)
