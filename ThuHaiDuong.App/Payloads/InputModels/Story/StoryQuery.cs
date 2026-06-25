@@ -9,6 +9,7 @@ public class StoryQuery : PaginationParams
     public Guid? CategoryId { get; set; }
     public string? CategorySlug { get; set; }
     public Guid? TagId { get; set; }
+    public string? TagSlug { get; set; }
     public Guid? AuthorId { get; set; }
     public string? Country { get; set; }
     public string? StoryType { get; set; }

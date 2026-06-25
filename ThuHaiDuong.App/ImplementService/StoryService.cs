@@ -407,6 +407,10 @@ public class StoryService : IStoryService
         if (!string.IsNullOrWhiteSpace(filter.CategorySlug))
             query = query.Where(s =>
                 s.StoryCategories.Any(sc => sc.Category.Slug == filter.CategorySlug));
+        
+        if (!string.IsNullOrWhiteSpace(filter.TagSlug))
+            query = query.Where(s =>
+                s.StoryTags.Any(st => st.Tag.Slug == filter.TagSlug));
  
         if (filter.TagId.HasValue)
             query = query.Where(s =>
