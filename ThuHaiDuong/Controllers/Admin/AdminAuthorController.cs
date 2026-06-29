@@ -10,7 +10,7 @@ namespace ThuHaiDuong.Controllers;
 
 [ApiController]
 [Route("api/admin/authors")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,SuperAdmin")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class AdminAuthorController : ControllerBase
 {
     private readonly IAuthorService _authorService;
@@ -21,6 +21,7 @@ public class AdminAuthorController : ControllerBase
     }
  
     [HttpGet]
+    [Authorize(Roles = "Contributor,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<AuthorResult>>> GetListAsync(
         [FromQuery] AuthorQuery query)
     {
@@ -29,6 +30,7 @@ public class AdminAuthorController : ControllerBase
     }
  
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<AuthorResult>> GetByIdAsync(Guid id)
     {
         var result = await _authorService.GetByIdAsync(id);
@@ -36,6 +38,7 @@ public class AdminAuthorController : ControllerBase
     }
  
     [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<AuthorResult>> CreateAsync(
         [FromBody] CreateAuthorInput input)
     {
@@ -44,6 +47,7 @@ public class AdminAuthorController : ControllerBase
     }
  
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<AuthorResult>> UpdateAsync(
         Guid id,
         [FromBody] UpdateAuthorInput input)
@@ -53,6 +57,7 @@ public class AdminAuthorController : ControllerBase
     }
  
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         await _authorService.DeleteAsync(id);

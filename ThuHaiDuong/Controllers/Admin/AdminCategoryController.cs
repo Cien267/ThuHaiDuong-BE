@@ -10,7 +10,7 @@ namespace ThuHaiDuong.Controllers;
 
 [ApiController]
 [Route("api/admin/categories")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,SuperAdmin")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class AdminCategoryController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
@@ -21,6 +21,7 @@ public class AdminCategoryController : ControllerBase
     }
  
     [HttpGet]
+    [Authorize(Roles = "Contributor,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<CategoryResult>>> GetListAsync(
         [FromQuery] CategoryQuery query)
     {
@@ -29,6 +30,7 @@ public class AdminCategoryController : ControllerBase
     }
  
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<CategoryResult>> GetByIdAsync(Guid id)
     {
         var result = await _categoryService.GetByIdAsync(id);
@@ -36,6 +38,7 @@ public class AdminCategoryController : ControllerBase
     }
  
     [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<CategoryResult>> CreateAsync(
         [FromBody] CreateCategoryInput input)
     {
@@ -44,6 +47,7 @@ public class AdminCategoryController : ControllerBase
     }
  
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<CategoryResult>> UpdateAsync(
         Guid id,
         [FromBody] UpdateCategoryInput input)
@@ -53,6 +57,7 @@ public class AdminCategoryController : ControllerBase
     }
  
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         await _categoryService.DeleteAsync(id);

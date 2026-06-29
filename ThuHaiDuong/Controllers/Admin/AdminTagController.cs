@@ -10,7 +10,7 @@ namespace ThuHaiDuong.Controllers;
 
 [ApiController]
 [Route("api/admin/tags")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,SuperAdmin")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class AdminTagController : ControllerBase
 {
     private readonly ITagService _tagService;
@@ -21,6 +21,7 @@ public class AdminTagController : ControllerBase
     }
  
     [HttpGet]
+    [Authorize(Roles = "Contributor,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<TagResult>>> GetListAsync(
         [FromQuery] TagQuery query)
     {
@@ -29,6 +30,7 @@ public class AdminTagController : ControllerBase
     }
  
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<TagResult>> GetByIdAsync(Guid id)
     {
         var result = await _tagService.GetByIdAsync(id);
@@ -36,6 +38,7 @@ public class AdminTagController : ControllerBase
     }
  
     [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<TagResult>> CreateAsync(
         [FromBody] CreateTagInput input)
     {
@@ -44,6 +47,7 @@ public class AdminTagController : ControllerBase
     }
  
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<TagResult>> UpdateAsync(
         Guid id,
         [FromBody] UpdateTagInput input)
@@ -53,6 +57,7 @@ public class AdminTagController : ControllerBase
     }
  
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         await _tagService.DeleteAsync(id);
