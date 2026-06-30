@@ -11,7 +11,7 @@ namespace ThuHaiDuong.Controllers;
 [ApiController]
 [Route("api/admin/chapters")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
-    Roles = "Admin,SuperAdmin")]
+    Roles = "Contributor,Admin,SuperAdmin")]
 public class AdminChapterController : ControllerBase
 {
     private readonly IChapterService _chapterService;

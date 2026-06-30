@@ -10,8 +10,7 @@ namespace ThuHaiDuong.Controllers;
 
 [ApiController]
 [Route("api/admin/comments")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
-    Roles = "Admin,SuperAdmin")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class AdminCommentController : ControllerBase
 {
     private readonly ICommentService _commentService;
@@ -22,6 +21,7 @@ public class AdminCommentController : ControllerBase
     }
  
     [HttpGet]
+    [Authorize(Roles = "Contributor,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<CommentResult>>> GetListAsync(
         [FromQuery] AdminCommentQuery query)
     {
@@ -30,6 +30,7 @@ public class AdminCommentController : ControllerBase
     }
  
     [HttpPatch("{id:guid}/toggle-hide")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> ToggleHideAsync(Guid id)
     {
         await _commentService.ToggleHideAsync(id);
@@ -37,6 +38,7 @@ public class AdminCommentController : ControllerBase
     }
  
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         await _commentService.DeleteAsync(id);

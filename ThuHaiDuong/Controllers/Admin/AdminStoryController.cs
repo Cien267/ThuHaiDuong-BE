@@ -40,7 +40,7 @@ public class AdminStoryController : ControllerBase
     }
  
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Contributor,Admin,SuperAdmin")]
     public async Task<ActionResult<StoryResult>> GetByIdAsync(Guid id)
     {
         var result = await _storyService.GetByIdAdminAsync(id);

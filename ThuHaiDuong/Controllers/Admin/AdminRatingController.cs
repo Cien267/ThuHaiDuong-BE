@@ -9,8 +9,7 @@ namespace ThuHaiDuong.Controllers;
 
 [ApiController]
 [Route("api/admin/ratings")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
-    Roles = "Admin,SuperAdmin")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class AdminRatingController : ControllerBase
 {
     private readonly IRatingService _ratingService;
@@ -21,6 +20,7 @@ public class AdminRatingController : ControllerBase
     }
  
     [HttpGet]
+    [Authorize(Roles = "Contributor,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<RatingResult>>> GetListAsync(
         [FromQuery] Guid storyId,
         [FromQuery] int page = 1,
@@ -31,6 +31,7 @@ public class AdminRatingController : ControllerBase
     }
  
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         await _ratingService.DeleteAsync(id);
