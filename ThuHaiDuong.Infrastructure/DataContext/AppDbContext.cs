@@ -29,6 +29,7 @@ namespace ThuHaiDuong.Infrastructure.DataContext
         public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
         public virtual DbSet<Author> Authors { get; set; }
         public virtual DbSet<ReadingHistory> ReadingHistories { get; set; }
+        public virtual DbSet<Notification> Notifications { get; set; }
         public async Task<int> CommitChangeAsync()
         {
             return await SaveChangesAsync();
@@ -114,6 +115,7 @@ namespace ThuHaiDuong.Infrastructure.DataContext
             modelBuilder.BuildRefreshTokenModel();
             modelBuilder.BuildAuthorModel();
             modelBuilder.BuildReadingHistoryModel();
+            modelBuilder.BuildNotificationModel();
         }
     }
 }

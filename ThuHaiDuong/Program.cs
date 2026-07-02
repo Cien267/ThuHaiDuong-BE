@@ -4,6 +4,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
+using ThuHaiDuong.Application.Hubs;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Middlewares;
 using ThuHaiDuong.Extensions;
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAllServices(builder.Configuration);
 builder.Services.AddHostedService<DailyAggregationJob>();
+builder.Services.AddSignalR();
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
@@ -84,6 +86,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 var allowedIPs = builder.Configuration
     .GetSection("Hangfire:AllowedIPs")

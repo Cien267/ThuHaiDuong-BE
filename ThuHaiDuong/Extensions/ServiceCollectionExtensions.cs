@@ -118,6 +118,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddNotificationServices(this IServiceCollection services)
+    {
+        services.AddScoped<INotificationService, NotificationService>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
@@ -133,7 +139,8 @@ public static class ServiceCollectionExtensions
             .AddAnalyticsServices()
             .AddReadingProgressServices()
             .AddCommentServices()
-            .AddRatingServices();
+            .AddRatingServices()
+            .AddNotificationServices();
 
         return services;
     }

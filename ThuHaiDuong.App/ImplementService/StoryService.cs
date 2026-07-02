@@ -23,19 +23,25 @@ public class StoryService : IStoryService
     private readonly IBaseRepository<Category> _categoryRepo;
     private readonly IBaseRepository<Tag> _tagRepo;
     private readonly IStoryRepository _storyRepo;
+    private readonly IBaseRepository<User> _userRepo;
+    private readonly INotificationService _notificationService;
  
     public StoryService(
         IBaseRepository<Story> baseRepo,
         IBaseRepository<Author> authorRepo,
         IBaseRepository<Category> categoryRepo,
         IBaseRepository<Tag> tagRepo,
-        IStoryRepository storyRepo)
+        IStoryRepository storyRepo,
+        IBaseRepository<User> userRepo,
+        INotificationService notificationService)
     {
         _baseRepo     = baseRepo;
         _authorRepo   = authorRepo;
         _categoryRepo = categoryRepo;
         _tagRepo      = tagRepo;
         _storyRepo    = storyRepo;
+        _userRepo     = userRepo;
+        _notificationService = notificationService;
     }
  
     // ── CLIENT ────────────────────────────────────────────────────────────────
@@ -252,9 +258,24 @@ public class StoryService : IStoryService
             throw new ResponseErrorObject(
                 "Truyện phải có ít nhất một chương để có thể được review.",
                 StatusCodes.Status422UnprocessableEntity);
+        
+        var isResubmit = story.Status == StoryStatus.Rejected;
  
         story.Status = StoryStatus.PendingReview;
         await _baseRepo.UpdateAsync(story);
+        
+        // notification
+        var adminUsers = await _userRepo.BuildQueryable([],
+                u => (u.Role == "Admin" || u.Role == "SuperAdmin") && u.IsActive && !u.DeletedAt.HasValue)
+            .Select(u => u.Id)
+            .ToListAsync();
+        
+        var notifType  = isResubmit ? NotificationType.StoryResubmitted : NotificationType.StorySubmitted;
+        var notifTitle = isResubmit ? "Truyện được gửi lại để duyệt" : "Truyện mới cần duyệt";
+        var notifMsg   = $"'{story.Title}' đang chờ phê duyệt.";
+
+        foreach (var adminId in adminUsers)
+            await _notificationService.CreateAndPushAsync(adminId, notifType, notifTitle, notifMsg, story.Id);
     }
  
     // ── REVIEW (SUPER ADMIN ONLY) ─────────────────────────────────────────────
@@ -285,6 +306,26 @@ public class StoryService : IStoryService
         }
  
         await _baseRepo.UpdateAsync(story);
+        
+        // notification
+        if (input.IsApproved)
+        {
+            await _notificationService.CreateAndPushAsync(
+                story.UploadedByUserId!.Value,
+                NotificationType.StoryApproved,
+                "Truyện đã được duyệt",
+                $"'{story.Title}' đã được phê duyệt. Bạn có thể tiến hành xuất bản.",
+                story.Id);
+        }
+        else
+        {
+            await _notificationService.CreateAndPushAsync(
+                story.UploadedByUserId!.Value,
+                NotificationType.StoryRejected,
+                "Truyện bị từ chối",
+                $"'{story.Title}' bị từ chối. Lý do: {input.RejectionReason}",
+                story.Id);
+        }
     }
  
     // ── UPDATE STATUS (ADMIN) ─────────────────────────────────────────────────
