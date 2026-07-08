@@ -162,14 +162,41 @@ public class CommentService : ICommentService
  
         var total = await dbQuery.CountAsync();
  
-        var items = await dbQuery
+        var rootComments = await dbQuery
             .OrderByDescending(c => c.CreatedAt)
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(CommentResult.FromComment)
             .ToListAsync();
+        
+        if (rootComments.Count == 0)
+            return new PagedResult<CommentResult>(rootComments, total, query.PageNumber, query.PageSize);
+        
+        var rootIds = rootComments.Select(c => c.Id).ToList();
+        var repliesQuery = _baseRepo.BuildQueryable(
+            ["User"],
+            c =>
+                c.ParentCommentId != null &&
+                rootIds.Contains(c.ParentCommentId.Value) &&
+                !c.IsHidden &&
+                !c.DeletedAt.HasValue
+        );
+        
+        var replies = await repliesQuery.OrderBy(c => c.CreatedAt)
+            .Select(CommentResult.FromComment)
+            .ToListAsync();
+        
+        var replyLookup = replies
+            .GroupBy(r => r.ParentCommentId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        
+        foreach (var root in rootComments)
+        {
+            if (replyLookup.TryGetValue(root.Id, out var rootReplies))
+                root.Replies = rootReplies;
+        }
  
-        return new PagedResult<CommentResult>(items, total, query.PageNumber, query.PageSize);
+        return new PagedResult<CommentResult>(rootComments, total, query.PageNumber, query.PageSize);
     }
  
     public async Task ToggleHideAsync(Guid commentId)

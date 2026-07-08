@@ -16,15 +16,18 @@ public class RatingService : IRatingService
     private readonly IBaseRepository<Rating> _baseRepo;
     private readonly IBaseRepository<Story>  _storyRepo;
     private readonly IRatingRepository       _ratingRepo;
+    private readonly ICacheService           _cache;
  
     public RatingService(
         IBaseRepository<Rating> baseRepo,
         IBaseRepository<Story>  storyRepo,
-        IRatingRepository       ratingRepo)
+        IRatingRepository       ratingRepo,
+        ICacheService           cache)
     {
         _baseRepo   = baseRepo;
         _storyRepo  = storyRepo;
         _ratingRepo = ratingRepo;
+        _cache      = cache; 
     }
  
     public async Task<RatingResult> CreateAsync(Guid userId, CreateRatingInput input)
@@ -54,7 +57,10 @@ public class RatingService : IRatingService
  
         // Sync AverageRating + RatingCount trên Story ngay lập tức
         await _ratingRepo.SyncStoryRatingAsync(input.StoryId);
- 
+        
+        // Invalidate cache để lần sau lấy data mới
+        await _cache.RemoveAsync(CacheKeys.StoryDetail(story.Slug));
+        
         // Reload với User navigation để trả về đầy đủ
         var query = _baseRepo.BuildQueryable(
             ["User"],
@@ -130,5 +136,9 @@ public class RatingService : IRatingService
  
         // Sync lại rating story sau khi xóa
         await _ratingRepo.SyncStoryRatingAsync(rating.StoryId);
+        
+        var story = await _storyRepo.GetByIdAsync(rating.StoryId);
+        if (story != null)
+            await _cache.RemoveAsync(CacheKeys.StoryDetail(story.Slug));
     }
 }
