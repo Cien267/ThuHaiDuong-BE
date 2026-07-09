@@ -10,6 +10,9 @@ public interface IBookmarkService
  
     // Kiểm tra user đã bookmark chưa (dùng khi render trang truyện)
     Task<bool> IsBookmarkedAsync(Guid userId, Guid storyId);
+    
+    // Kiểm tra user đã bookmark chưa bằng story slug (dùng khi render trang truyện)
+    Task<bool> IsBookmarkedBySlugAsync(Guid userId, string storySlug);
  
     // Danh sách bookmark của user kèm reading progress
     Task<List<BookmarkResult>> GetUserBookmarksAsync(Guid userId);

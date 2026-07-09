@@ -36,6 +36,13 @@ public class BookmarkController : ControllerBase
         var result = await _bookmarkService.IsBookmarkedAsync(CurrentUserId, storyId);
         return Ok(result);
     }
+    
+    [HttpGet("{storySlug}")]
+    public async Task<ActionResult<bool>> IsBookmarkedAsync(string storySlug)
+    {
+        var result = await _bookmarkService.IsBookmarkedBySlugAsync(CurrentUserId, storySlug);
+        return Ok(result);
+    }
  
     [HttpPost("{storyId:guid}/toggle")]
     public async Task<ActionResult<BookmarkToggleResult>> ToggleAsync(Guid storyId)

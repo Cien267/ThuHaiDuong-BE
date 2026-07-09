@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using ThuHaiDuong.Application.Payloads.ResultModels.Common;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Bookmark;
+using ThuHaiDuong.Application.Payloads.ResultModels.User.Category;
 
 namespace ThuHaiDuong.Application.Payloads.ResultModels.Bookmark;
 
@@ -14,6 +15,9 @@ public class BookmarkResult : DataResponseBase
     public int TotalChapters { get; set; }
     public DateTime? LastChapterAt { get; set; }
     public DateTime BookmarkedAt { get; set; }
+    public string AuthorName { get; set; } = null!;
+    public List<CategorySummaryItem> StoryCategories { get; set; } = null!;
+    
  
     // Tiếp tục đọc từ chỗ dở — null nếu chưa đọc chapter nào
     public ChapterProgressItem? LastReadChapter { get; set; }
@@ -30,5 +34,14 @@ public class BookmarkResult : DataResponseBase
             LastChapterAt      = b.Story.LastChapterAt,
             BookmarkedAt       = b.CreatedAt,
             LastReadChapter    = null,
+            AuthorName         = b.Story.AuthorName,
+            StoryCategories    = b.Story.StoryCategories
+                .Where(sc => !sc.Category.DeletedAt.HasValue && sc.Category.IsActive)
+                .Select(sc => new CategorySummaryItem
+                {
+                    Id   = sc.CategoryId,
+                    Name = sc.Category.Name,
+                    Slug = sc.Category.Slug,
+                }).ToList(),
         };
 }

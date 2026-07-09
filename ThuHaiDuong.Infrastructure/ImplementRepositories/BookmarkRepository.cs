@@ -34,6 +34,15 @@ public class BookmarkRepository : IBookmarkRepository
                 !b.DeletedAt.HasValue);
     }
 
+    public async Task<bool> ExistsBySlugAsync(Guid userId, string storySlug)
+    {
+        return await _context.Bookmarks
+            .AnyAsync(b =>
+                b.UserId == userId &&
+                b.Story.Slug == storySlug &&
+                !b.DeletedAt.HasValue);
+    }
+
     public async Task<List<Bookmark>> GetUserBookmarksByIdAsync(Guid userId)
     {
         return await _context.Bookmarks

@@ -3,6 +3,7 @@ using ThuHaiDuong.Application.InterfaceService;
 using ThuHaiDuong.Application.Payloads.Responses;
 using ThuHaiDuong.Application.Payloads.ResultModels.Bookmark;
 using ThuHaiDuong.Application.Payloads.ResultModels.User.Bookmark;
+using ThuHaiDuong.Application.Payloads.ResultModels.User.Category;
 using ThuHaiDuong.Domain.Entities;
 using ThuHaiDuong.Domain.InterfaceRepositories;
 using ThuHaiDuong.Shared.Constants;
@@ -59,6 +60,11 @@ public class BookmarkService : IBookmarkService
     {
         return await _bookmarkRepo.ExistsAsync(userId, storyId);
     }
+    
+    public async Task<bool> IsBookmarkedBySlugAsync(Guid userId, string storySlug)
+    {
+        return await _bookmarkRepo.ExistsBySlugAsync(userId, storySlug);
+    }
  
     public async Task<List<BookmarkResult>> GetUserBookmarksAsync(Guid userId)
     {
@@ -80,6 +86,16 @@ public class BookmarkService : IBookmarkService
                 LastChapterAt      = bookmark.Story.LastChapterAt,
                 BookmarkedAt       = bookmark.CreatedAt,
                 LastReadChapter    = null,
+                AuthorName         = bookmark.Story.AuthorName,
+                StoryCategories    = bookmark.Story.StoryCategories
+                    .Where(sc => !sc.Category.DeletedAt.HasValue && sc.Category.IsActive)
+                    .Select(sc => new CategorySummaryItem
+                    {
+                        Id   = sc.CategoryId,
+                        Name = sc.Category.Name,
+                        Slug = sc.Category.Slug,
+                    }).ToList(),
+                
             };
             if (progresses.TryGetValue(bookmark.StoryId, out var progress))
             {

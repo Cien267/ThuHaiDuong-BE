@@ -37,6 +37,7 @@ public static class BookmarkModelBuilderExtensions
  
             entity.HasIndex(e => new { e.UserId, e.StoryId })
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_Bookmark_UserId_StoryId");
  
             entity.HasIndex(e => new { e.UserId, e.CreatedAt })

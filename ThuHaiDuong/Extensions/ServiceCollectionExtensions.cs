@@ -123,6 +123,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationService, NotificationService>();
         return services;
     }
+
+    public static IServiceCollection AddBookmarkServices(this IServiceCollection services)
+    {
+        services.AddScoped<IBookmarkService, BookmarkService>();
+        services.AddScoped<IBookmarkRepository, BookmarkRepository>();
+        return services;
+    }
     
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
@@ -140,7 +147,8 @@ public static class ServiceCollectionExtensions
             .AddReadingProgressServices()
             .AddCommentServices()
             .AddRatingServices()
-            .AddNotificationServices();
+            .AddNotificationServices()
+            .AddBookmarkServices();
 
         return services;
     }
