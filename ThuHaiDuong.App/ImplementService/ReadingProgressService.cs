@@ -51,13 +51,12 @@ public class ReadingProgressService : IReadingProgressService
             throw new ResponseErrorObject(
                 "Chapter not found.", StatusCodes.Status404NotFound);
  
-        // Chạy song song: upsert progress + upsert history
-        await Task.WhenAll(
-            _progressRepo.UpsertProgressAsync(
-                userId, input.StoryId, input.ChapterId, input.ChapterNumber),
-            _progressRepo.UpsertHistoryAsync(
-                userId, input.StoryId, input.ChapterId)
-        );
+        // upsert progress + upsert history
+        await _progressRepo.UpsertProgressAsync(
+            userId, input.StoryId, input.ChapterId, input.ChapterNumber);
+
+        await _progressRepo.UpsertHistoryAsync(
+            userId, input.StoryId, input.ChapterId);
     }
  
     public async Task<ReadingProgressResult?> GetProgressAsync(Guid userId, Guid storyId)
