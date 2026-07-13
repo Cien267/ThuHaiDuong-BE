@@ -47,6 +47,7 @@ public static class ReadingHistoryModelBuilderExtensions
             // Mỗi user + chapter chỉ có 1 record → UPSERT pattern
             entity.HasIndex(e => new { e.UserId, e.ChapterId })
                 .IsUnique()
+                .HasFilter("[DeletedAt] IS NULL")
                 .HasDatabaseName("IX_ReadingHistory_UserId_ChapterId");
  
             // Query lịch sử đọc của user theo story
