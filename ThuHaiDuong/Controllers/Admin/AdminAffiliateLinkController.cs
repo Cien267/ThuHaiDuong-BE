@@ -15,10 +15,12 @@ namespace ThuHaiDuong.Controllers;
 public class AdminAffiliateLinkController : ControllerBase
 {
     private readonly IAffiliateService _affiliateService;
+    private readonly IFileStorageService  _fileStorage;
  
-    public AdminAffiliateLinkController(IAffiliateService affiliateService)
+    public AdminAffiliateLinkController(IAffiliateService affiliateService, IFileStorageService   fileStorage)
     {
         _affiliateService = affiliateService;
+        _fileStorage = fileStorage;
     }
  
     /// <summary>
@@ -79,5 +81,17 @@ public class AdminAffiliateLinkController : ControllerBase
     {
         await _affiliateService.DeleteAsync(id);
         return NoContent();
+    }
+    
+    /// <summary>
+    /// Upload ảnh bìa cho affiliate.
+    /// Allowed: jpeg, png, webp. Max 5MB.
+    /// </summary>
+    [HttpPost("upload-image")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult<AffiliateImageUploadResult>> UploadCoverAsync(IFormFile file)
+    {
+        var url = await _fileStorage.UploadAsync(file, "affiliate-images");
+        return Ok(new AffiliateImageUploadResult { ImageUrl = url });
     }
 }

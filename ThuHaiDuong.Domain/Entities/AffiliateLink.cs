@@ -19,6 +19,8 @@ public class AffiliateLink : BaseEntity
     public bool IsActive { get; set; } = true;
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    
+    public string? ImageUrl { get; set; }
  
     // Navigation
     public virtual ICollection<AffiliateLinkStory> AffiliateLinkStories { get; set; } = [];
@@ -67,6 +69,9 @@ public static class AffiliateLinkModelBuilderExtensions
             entity.Property(e => e.EndDate)
                 .HasColumnType("datetime2")
                 .IsRequired(false);
+            
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(500);
  
             entity.Property(e => e.CreatedAt)
                 .IsRequired()

@@ -19,6 +19,7 @@ public class UpdateAffiliateLinkInput
  
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    public string? ImageUrl { get; set; }
  
     public List<Guid> StoryIds { get; set; } = [];
     public List<Guid> ChapterIds { get; set; } = [];

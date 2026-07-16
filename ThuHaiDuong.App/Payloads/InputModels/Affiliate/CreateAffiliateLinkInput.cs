@@ -23,6 +23,7 @@ public class CreateAffiliateLinkInput
  
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    public string? ImageUrl { get; set; }
  
     // Gắn vào story/chapter cụ thể ngay lúc tạo (optional)
     public List<Guid> StoryIds { get; set; } = [];

@@ -18,6 +18,7 @@ public class AffiliateLinkResult : DataResponseBase
     public bool IsActive { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    public string? ImageUrl { get; set; }
  
     // Thống kê tổng
     public int TotalClicks { get; set; }
@@ -47,6 +48,7 @@ public class AffiliateLinkResult : DataResponseBase
             TotalChapters = l.AffiliateLinkChapters.Count,
             CreatedAt     = l.CreatedAt,
             UpdatedAt     = l.UpdatedAt,
+            ImageUrl      = l.ImageUrl,
             Stories       = l.AffiliateLinkStories
                 .Select(s => new AffiliateLinkTargetItem
                 {

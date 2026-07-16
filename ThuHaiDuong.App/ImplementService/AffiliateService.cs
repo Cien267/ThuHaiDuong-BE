@@ -188,6 +188,7 @@ public class AffiliateService : IAffiliateService
             IsActive     = input.IsActive,
             StartDate    = input.StartDate,
             EndDate      = input.EndDate,
+            ImageUrl     = input.ImageUrl,
         };
  
         await _baseRepo.CreateAsync(link);
@@ -213,6 +214,7 @@ public class AffiliateService : IAffiliateService
         link.IsActive  = input.IsActive;
         link.StartDate = input.StartDate;
         link.EndDate   = input.EndDate;
+        link.ImageUrl = input.ImageUrl;
  
         await _baseRepo.UpdateAsync(link);
  
