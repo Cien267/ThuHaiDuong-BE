@@ -66,6 +66,7 @@ public class AffiliateService : IAffiliateService
                 Id          = l.Id,
                 Name        = l.Name,
                 Placement   = l.Placement,
+                ImageUrl    = l.ImageUrl ?? "",
                 RedirectUrl = $"/go/{l.TrackingCode}",
             })
             .ToList();
