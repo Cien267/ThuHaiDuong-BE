@@ -131,6 +131,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddLinkPreviewServices(this IServiceCollection services)
+    {
+        services.AddScoped<ILinkPreviewService, LinkPreviewService>();
+        return services;
+    }
+    
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services
@@ -148,7 +154,8 @@ public static class ServiceCollectionExtensions
             .AddCommentServices()
             .AddRatingServices()
             .AddNotificationServices()
-            .AddBookmarkServices();
+            .AddBookmarkServices()
+            .AddLinkPreviewServices();
 
         return services;
     }
